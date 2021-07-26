@@ -75,14 +75,16 @@ def get_data(result, args):
 
     return xdata, ydata, conv
 
-def get_curves(name, xdata, ydata, conv):
+def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
     curves = []
     if args.show_std and conv != None:
         # Standard-deviation curve
         curve = ax.plot(
             xdata, 
             [ acc*100. for acc in conv['std'] ], 
-            label='{}'.format(name)
+            label='{}'.format(name),
+            marker=marker,
+            linestyle=linestyle
         )
         curves.append(curve)
         return curves
@@ -91,7 +93,9 @@ def get_curves(name, xdata, ydata, conv):
         curve = ax.plot(
             xdata, 
             ydata, 
-            label='{}'.format(name)
+            label='{}'.format(name),
+            marker=marker,
+            linestyle=linestyle
         )
         curves.append(curve)
 
@@ -102,14 +106,16 @@ def get_curves(name, xdata, ydata, conv):
             xdata,
             [ acc*100. for acc in conv['min'] ],
             color=curve[0].get_color(),
-            linewidth=0.5
+            linewidth=0.5,
+            linestyle=linestyle
         )
     elif args.add_min_max and conv != None:
         min = ax.plot(
             xdata,
             conv['min'],
             color=curve[0].get_color(),
-            linewidth=0.5
+            linewidth=0.5,
+            linestyle=linestyle
         )
 
     # Max curve
@@ -118,14 +124,16 @@ def get_curves(name, xdata, ydata, conv):
             xdata,
             [ acc*100. for acc in conv['max'] ],
             color=curve[0].get_color(),
-            linewidth=0.5
+            linewidth=0.5,
+            linestyle=linestyle
         )
     elif args.add_min_max and conv != None:
         max = ax.plot(
             xdata,
             conv['max'],
             color=curve[0].get_color(),
-            linewidth=0.5
+            linewidth=0.5,
+            linestyle=linestyle
         )
 
     # Standard Deviation curves
@@ -192,6 +200,11 @@ if __name__ == "__main__":
                     help='Do not display legend (default: False).')
     parser.add_argument('--font-size', type=int, default=16,
                     help='Font size (default: 16).')
+    parser.add_argument('--markers', type=str, nargs='+', default=[],
+                    help='Markers used for each curve')
+    parser.add_argument('--linestyles', type=str, nargs='+', default=[],
+                    help='Linestyles used for each curve')
+
     args = parser.parse_args()
     print(args)
 
@@ -259,12 +272,28 @@ if __name__ == "__main__":
     else:
         labels = args.labels
 
+    if len(args.markers) == 0:
+        markers = [ '' for _ in experiment_names ]
+    elif len(args.markers) < len(experiment_names):
+        print('Insufficient number of markers')
+        sys.exit(1)
+    else:
+        markers = args.markers
+
+    if len(args.linestyles) == 0:
+        linestyles = [ '-' for _ in experiment_names ]
+    elif len(args.linestyles) < len(experiment_names):
+        print('Insufficient number of linestyles')
+        sys.exit(1)
+    else:
+        linestyles = args.linestyles
+
     exps = [ k for k in results.keys() ] + [ [merged] ]
 
-    for name,result in zip(labels, exps):
+    for name,marker,linestyle,result in zip(labels, markers,linestyles,exps):
         if type(result) is not list:
             xdata, ydata, conv = get_data(result, args)
-            curves.extend(get_curves(name, xdata, ydata, conv))
+            curves.extend(get_curves(name, xdata, ydata, conv, marker=marker, linestyle=linestyle))
         elif len(result) > 0:
             data = [ get_data(result, args) for result in merged ]
             if data[0][2] == None:
@@ -286,7 +315,7 @@ if __name__ == "__main__":
                     conv["avg"][i] += d[2]["avg"][i]
                 conv["avg"][i] /= len(data)
                 conv["avg"][i] *= 100. # average is reported in %
-            curves.extend(get_curves(name, xdata, conv["avg"], conv))
+            curves.extend(get_curves(name, xdata, conv["avg"], conv, marker=marker, linestyle=linestyle))
 
     # Add some text for batch-sizes, title and custom x-axis tick labels, etc.
     ax.spines['top'].set_visible(False)
