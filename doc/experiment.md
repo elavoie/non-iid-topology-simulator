@@ -5,14 +5,14 @@ at least one paper or otherwise repeated investigations. Current tool
 implementations may still generate more files, events, or object properties that
 are not documented here but could be left overs from previous one-off investigations.
 
-## Directory Conventions
+## Conventions
 
 ### Single Experiment
 
-An experiment is a meaningful unit of result(s) and typically corresponds to
-one or multiple curves intended to be used in one or multiple plots in papers.
-We create one directory per experiment, with a name specific to what the
-results are, and the following sub-items:
+An experiment is a meaningful unit of result(s) and will typically be used to
+generate one or multiple curves for plots in papers.  We create one directory
+per experiment, with a name specific to what the results are, and the following
+sub-items:
 
 ````
 EXPERIMENT/

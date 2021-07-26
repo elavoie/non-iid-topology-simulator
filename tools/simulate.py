@@ -798,27 +798,33 @@ def fully_connected_cliques(nodes, metric, position=None, rank=None, clique_size
     return edges
 
 def random_ten(nodes, metric, position=None, rank=None, args={}):
-    edges = { n['rank']: set() for n in nodes }
-
     seed = args.seed
     rand = Random()
     rand.seed(seed)
 
-    for n in nodes:
-        rank = n['rank']
-        available = [ m['rank'] for m in nodes 
-                      if m['rank'] != rank
-                      and len(edges[m['rank']]) < 10 
-                      and m['rank'] not in edges[rank] ]
-        rand.shuffle(available)
-        toadd = (10 - len(edges[rank]))
-        for neighbour in available[:toadd]:
-            edges[rank].add(neighbour)
-            edges[neighbour].add(rank)
+    found = False
+    while not found:  
+        edges = { n['rank']: set() for n in nodes }
 
-    for n in nodes:
-        assert len(edges[rank]) == 10
+        for n in nodes:
+            rank = n['rank']
+            available = [ m['rank'] for m in nodes 
+                          if m['rank'] != rank
+                          and len(edges[m['rank']]) < 10 
+                          and m['rank'] not in edges[rank] ]
+            rand.shuffle(available)
+            toadd = (10 - len(edges[rank]))
+            for neighbour in available[:toadd]:
+                edges[rank].add(neighbour)
+                edges[neighbour].add(rank)
 
+        found = True
+        for n in nodes:
+            if len(edges[n['rank']]) != 10:
+                found = False
+                break
+        if not found:
+            logging.info('random_ten: current solution invalid, trying another one') 
     return edges
 
 def greedy_diverse_ten(nodes, metric, position=None, rank=None, args={}):
