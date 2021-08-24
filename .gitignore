@@ -1,3 +1,4 @@
 data/
 examples/all/
-tools/__pycache__/
+**/__pycache__/
+*.swp
