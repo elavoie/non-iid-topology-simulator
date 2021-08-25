@@ -2,26 +2,73 @@
 import argparse
 import logging
 import json
+import pickle
+import copy
+from importlib import import_module
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
+from torch.multiprocessing import Process, JoinableQueue, Pipe
 import setup.meta as m
 import setup.dataset as d
 
+def model_accuracy(model, dataset, params):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in dataset:
+            output = model.forward(data, params)
+            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            correct += pred.eq(target.view_as(pred)).sum().item()
+    test_loss /= len(dataset)
+    return float(correct)/float(len(dataset)), test_loss
+
+def log_task(tasks, params):
+    valid_set = torch.utils.data.DataLoader(d.valid(params), 100)
+    test_set = torch.utils.data.DataLoader(d.test(params), 100)
+    model = import_module(params['model']['module']).create(params)
+    for rank, epoch, step, model_state, event_file in iter(tasks.get, 'STOP'):
+        model.load_state_dict(pickle.loads(model_state))
+
+        for name, dataset in [('valid', valid_set), ('test', test_set)]:
+            accuracy, test_loss = model_accuracy(model,dataset,params)
+            with open(event_file, 'a') as events:
+                events.write(json.dumps({
+                    "type": "accuracy",
+                    "data": name,
+                    "rank": rank,
+                    "epoch": epoch,
+                    "batch": step,
+                    "loss": test_loss,
+                    "accuracy": accuracy 
+                }) + '\n')
+        tasks.task_done()
+
 class Logger:
-    def __init__(self, params):
+    def __init__(self, params, nodes):
+        nb_nodes = len(nodes)
         self.params = params
-        self.running_loss = [ 0.0 for _ in range(params['nodes']['nb-nodes']) ]
+        self.running_loss = [ 0.0 for _ in range(nb_nodes) ]
         self.running_loss_count = 0
-        self.valid_set = torch.utils.data.DataLoader(d.valid(params), 1000)
-        self.test_set = torch.utils.data.DataLoader(d.test(params), 1000)
+
+        # Create empty files first to avoid race condition on first write
+        for n in nodes:
+            open(n['event-file'], 'a').close()
+
+        self.tasks = JoinableQueue(maxsize=nb_nodes)
+        self.processes = []
+        for _ in range(params['logger']['nb-processes']):
+            p = Process(target=log_task, args=(self.tasks, copy.deepcopy(params)))
+            p.start()
+            self.processes.append(p)
 
     def state(self, epoch, state):
         nodes = state['nodes']
         if epoch > 0:
             self.log_train_accuracy(epoch, state)
-        self.log_test_accuracy(epoch, state, name='test') 
-        self.log_test_accuracy(epoch, state, name='valid') 
+        self.log_test_accuracy(epoch, state) 
 
     def loss(self, loss):
         assert len(loss) == len(self.running_loss), \
@@ -30,7 +77,6 @@ class Logger:
         for i in range(len(loss)):
             self.running_loss[i] += loss[i]
         self.running_loss_count += 1
-
 
     def log_train_accuracy(self, epoch, state):
         nodes = state['nodes']
@@ -77,56 +123,39 @@ class Logger:
 
         self.running_loss_count = 0
 
-    def log_test_accuracy(self, epoch, state, name='test'):
+    def log_test_accuracy(self, epoch, state):
         nodes = state['nodes']
         params = self.params
-        assert name == 'test' or name == 'valid', 'Invalid test dataset {}'.format(name)
-        test_set = self.test_set if name == 'test' else self.valid_set
 
         for n in nodes:
             rank = n['rank']
             model = n['model']
-            model.eval()
             event_file = n['event-file']
-            test_loss = 0
-            correct = 0
+            step = state['step']
+            self.tasks.put((n['rank'], epoch, step, pickle.dumps(n['model'].state_dict()), event_file))
+        self.tasks.join()
+        
+    def stop(self):
+        for _ in range(self.params['logger']['nb-processes']): 
+            self.tasks.put('STOP')
+        for p in self.processes:
+            p.join()
 
-            with torch.no_grad():
-                for data, target in test_set:
-                    output = model.forward(data, params)
-                    test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-                    pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-                    correct += pred.eq(target.view_as(pred)).sum().item()
-
-            test_loss /= len(test_set.dataset)
-
-            if name != 'test':
-                logging.info('(Rank {}, Epoch {}, Batch {}) {} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-                    rank, epoch, state['step'], name, test_loss, correct, len(test_set.dataset),
-                    100. * correct / len(test_set.dataset)))
-            with open(event_file, 'a') as events:
-                events.write(json.dumps({
-                    "type": "accuracy",
-                    "data": name,
-                    "rank": rank,
-                    "epoch": epoch,
-                    "batch": state['step'],
-                    "loss": test_loss,
-                    "accuracy": float(correct)/float(len(test_set.dataset))
-                }) + '\n')
-
-def init(params):
-    return Logger(params)
+def init(params, nodes):
+    return Logger(params, nodes)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Log events happening during simulation.')
     parser.add_argument('--rundir', type=str, default=None,
             help='Directory of the run in which to save options.')
+    parser.add_argument('--nb-processes', type=int, default=4, metavar='N',
+            help='Number of parallel processes to log the accuracy of models. (default: 8)')
 
     args = parser.parse_args()
     rundir = m.rundir(args)
 
     logger = {
+        'nb-processes': args.nb_processes
     }
     m.extend(rundir, 'logger', logger) # Add to run parameters
 

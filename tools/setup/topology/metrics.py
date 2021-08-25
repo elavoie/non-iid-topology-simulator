@@ -1,5 +1,13 @@
 from random import Random
 
+def get(name, params):
+    if name == 'similarity':
+        return similarity
+    elif name == 'dissimilarity':
+        return dissimilarity
+    elif name == 'random':
+        return random(params)
+
 # ***** Metrics **************
 def dissimilarity (n1, n2):
     total = 0
@@ -11,7 +19,8 @@ def dissimilarity (n1, n2):
 def similarity (n1, n2):
     return - dissimilarity(n1,n2)
 
-def random_metric (seed):
+def random (params):
+    seed = params['seed']
     memory = {}
     rand = Random()
     rand.seed(seed)

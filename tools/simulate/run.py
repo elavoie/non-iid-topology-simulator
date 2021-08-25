@@ -58,7 +58,7 @@ if __name__ == "__main__":
     global_file = os.path.join(rundir, 'events', "global.jsonlines")
 
     # Simulate algorithm
-    log = logger.init(params)
+    log = logger.init(params, nodes)
     state,loss,done = algo.init(nodes, topology, params)
     log.state(0,state)
     for epoch in range(1,args.nb_epochs+1):
@@ -69,3 +69,4 @@ if __name__ == "__main__":
                 log.loss(loss)
         log.state(epoch,state)
         done = False
+    log.stop()

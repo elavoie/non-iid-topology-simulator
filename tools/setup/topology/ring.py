@@ -58,7 +58,7 @@ if __name__ == "__main__":
     }
     m.extend(rundir, 'topology', params)
 
-    edges = create(nodes, getattr(metrics, args.metric))
+    edges = create(nodes, metrics.get(args.metric, meta))
     topology = {
       'edges': edges,
       'weights': compute_weights(nodes, edges, params),
