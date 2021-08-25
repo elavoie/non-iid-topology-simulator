@@ -14,7 +14,8 @@ cd $SCRIPT_DIR
 # used by the simulator. For a list of available options for each
 # command, run 'export PYTHONPATH=.; <command> --help'.
 setup/meta.py \
-  --results-directory all |
+  --results-directory all \
+  --log INFO |
 setup/dataset.py \
   --name mnist |
 setup/nodes.py \

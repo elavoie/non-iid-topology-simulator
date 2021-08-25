@@ -10,6 +10,7 @@ from random import Random
 import setup.dataset as dataset
 import setup.topology as t
 import simulate.logger as logger
+from torch.multiprocessing import Process
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simulate the pre-configured run.')
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     global_file = os.path.join(rundir, 'events', "global.jsonlines")
 
     # Simulate algorithm
+    logging.info('Starting logger')
     log = logger.init(params, nodes)
 
     def run(log, nodes, topology, params):
@@ -83,4 +85,5 @@ if __name__ == "__main__":
     main.start()
     main.join()
 
+    logging.info('Stopping Logger')
     log.stop()
