@@ -14,16 +14,19 @@ import setup.dataset as d
 
 def model_accuracy(model, dataset, params):
     model.eval()
-    test_loss = 0
     correct = 0
+    example_number = 0
+    num_batches = 0
+    total_loss = 0.0
     with torch.no_grad():
         for data, target in dataset:
             output = model.forward(data, params)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            total_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
-    test_loss /= len(dataset)
-    return float(correct)/float(len(dataset)), test_loss
+            example_number += target.size(0)
+            num_batches += 1
+    return float(correct)/float(example_number), total_loss / float(num_batches)
 
 def log_task(tasks, params):
     valid_set = torch.utils.data.DataLoader(d.valid(params), 100)
