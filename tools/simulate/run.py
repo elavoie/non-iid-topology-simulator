@@ -22,6 +22,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
+    logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
+
+
     algo = import_module(params['algorithm']['module'])
     event_dir = os.path.join(rundir, 'events')
     node_desc = m.load(rundir, 'nodes.json')
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     # issue still happens when the dataset is saved (torch.save) and
     # reloaded later (torch.load). When all processes are siblings this is
     # no longer an issue.
-    logging.info('Starting Main process')
+    logging.info('Starting main process')
     main = Process(target=run, args=(log, nodes, topology, params))
     main.start()
     main.join()

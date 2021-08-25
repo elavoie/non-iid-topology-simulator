@@ -19,13 +19,13 @@ setup/meta.py \
 setup/dataset.py \
   --name mnist |
 setup/nodes.py \
-  --nb-nodes 100 |
+  --nb-nodes 4 |
 setup/topology/ring.py \
   --metric 'dissimilarity' |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 128 |
 simulate/logger.py \
-  --nb-processes 4 |
+  --nb-processes 2 |
 simulate/run.py \
-  --nb-epochs 10
+  --nb-epochs 1
