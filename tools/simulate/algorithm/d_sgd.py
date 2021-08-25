@@ -96,6 +96,7 @@ def optimizer(model, params):
             momentum=params['algorithm']['learning-momentum'])
 
 def init(nodes, topology, params):
+    logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
     state = { 'nodes': nodes, 'topology': topology, 'step': 0 }
     for n in nodes:
         n['train-iterator'] = iter(torch.utils.data.DataLoader(

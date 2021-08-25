@@ -47,15 +47,11 @@ def log_task(tasks, params):
         tasks.task_done()
 
 class Logger:
-    def __init__(self, params, nodes):
-        nb_nodes = len(nodes)
+    def __init__(self, params):
+        nb_nodes = params['nodes']['nb-nodes']
         self.params = params
         self.running_loss = [ 0.0 for _ in range(nb_nodes) ]
         self.running_loss_count = 0
-
-        # Create empty files first to avoid race condition on first write
-        for n in nodes:
-            open(n['event-file'], 'a').close()
 
         self.tasks = JoinableQueue(maxsize=nb_nodes)
         self.processes = []
@@ -142,9 +138,9 @@ class Logger:
         for p in self.processes:
             p.join()
 
-def init(params, nodes):
+def init(params):
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
-    return Logger(params, nodes)
+    return Logger(params)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Log events happening during simulation.')
