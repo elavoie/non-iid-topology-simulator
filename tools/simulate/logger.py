@@ -59,7 +59,8 @@ class Logger:
 
         self.tasks = JoinableQueue(maxsize=nb_nodes)
         self.processes = []
-        for _ in range(params['logger']['nb-processes']):
+        for i in range(params['logger']['nb-processes']):
+            logging.info('starting logging task {}'.format(i))
             p = Process(target=log_task, args=(self.tasks, copy.deepcopy(params)))
             p.start()
             self.processes.append(p)
@@ -142,6 +143,7 @@ class Logger:
             p.join()
 
 def init(params, nodes):
+    logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
     return Logger(params, nodes)
 
 if __name__ == "__main__":
