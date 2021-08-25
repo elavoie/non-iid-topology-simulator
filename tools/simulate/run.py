@@ -59,14 +59,28 @@ if __name__ == "__main__":
 
     # Simulate algorithm
     log = logger.init(params, nodes)
-    state,loss,done = algo.init(nodes, topology, params)
-    log.state(0,state)
-    for epoch in range(1,args.nb_epochs+1):
-        print('epoch {}'.format(epoch))
-        while not done:
-            state,loss,done = algo.next(state, params)
-            if not done:
-                log.loss(loss)
-        log.state(epoch,state)
-        done = False
+
+    def run(log, nodes, topology, params):
+        state,loss,done = algo.init(nodes, topology, params)
+        log.state(0,state)
+        for epoch in range(1,args.nb_epochs+1):
+            print('epoch {}'.format(epoch))
+            while not done:
+                state,loss,done = algo.next(state, params)
+                if not done:
+                    log.loss(loss)
+            log.state(epoch,state)
+            done = False
+
+    # The main loop is also run in a separate process to avoid the deadlock
+    # on Linux when the MNIST dataset is open both in a parent process
+    # (this one) and child processes (the log_models) created later. This
+    # issue still happens when the dataset is saved (torch.save) and
+    # reloaded later (torch.load). When all processes are siblings this is
+    # no longer an issue.
+    logging.info('Starting Main process')
+    main = Process(target=run, args=(log, nodes, topology, params))
+    main.start()
+    main.join()
+
     log.stop()
