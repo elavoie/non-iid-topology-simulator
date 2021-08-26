@@ -20,8 +20,8 @@ setup/dataset.py \
   --name mnist |
 setup/nodes.py \
   --nb-nodes 4 |
-setup/topology/ring.py \
-  --metric 'dissimilarity' |
+setup/topology/grid.py \
+  --metric random |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 128 |

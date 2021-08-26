@@ -26,15 +26,6 @@ def create(nodes, metric):
         edges[first] = edges[first].union({n})
     return { rank: list(edges[rank]) for rank in edges }
 
-def load(rundir):
-    topology = m.load(rundir, 'topology.json')
-    edges = topology['edges']
-    topology['edges'] = { int(rank):edges[rank] for rank in edges }
-    topology['weights'] = torch.tensor(topology['weights'])
-    return topology
-
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate a Ring Topology.')
     parser.add_argument('--rundir', type=str, default=None,
