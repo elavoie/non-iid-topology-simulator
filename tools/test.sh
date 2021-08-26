@@ -20,8 +20,7 @@ setup/dataset.py \
   --name mnist |
 setup/nodes.py \
   --nb-nodes 4 |
-setup/topology/grid.py \
-  --metric random |
+setup/topology/fully-connected.py |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 128 |
