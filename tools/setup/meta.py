@@ -14,8 +14,8 @@ def rundir(args):
 
     if args.rundir is None:
         stdin = sys.stdin.readlines()
-        assert len(stdin) >= 1 , "Invalid standard output from previous process: expected RUNDIR on first line."
-        rundir = stdin[0].split('\n')[-1]
+        assert len(stdin) >= 1 , "Invalid standard output from previous process: expected RUNDIR on last line."
+        rundir = stdin[-1].split('\n')[0]
     else: 
         rundir = args.rundir
     assert os.path.exists(rundir), "Invalid run directory '{}'".format(rundir)
