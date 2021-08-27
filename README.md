@@ -33,7 +33,7 @@ $ conda install pytorch torchvision
 
 Successfully tested with pytorch v1.7.1, torchvision 0.8.2.
 
-### Install Git
+### Git
 
 ````
 $ sudo apt-get install git
@@ -58,8 +58,19 @@ $ cd non-iid-topology-simulator
 $ ./test.sh
 ````
 
-## More Usage Examples
+## Suggested Complementary Installations
+
+### Screen Utility
+````
+$ sudo apt-get install screen
+````
+
+### Experiment Examples
 
 See https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques/-/tree/master/results-v2
-for more experiment examples: each experiment is named 'experiments.sh' in a
-sub-directory.
+or install with:
+````
+$ git clone https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques.git
+````
+
+Each experiment is named 'experiments.sh' in a sub-directory of 'results-v2'.
