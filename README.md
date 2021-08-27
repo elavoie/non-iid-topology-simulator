@@ -38,6 +38,12 @@ Successfully tested with pytorch v1.7.1, torchvision 0.8.2.
 ````
 $ sudo apt-get install git
 ````
+ 
+### Setup Commit Info
+````
+$ git config --global user.email "email@mail.com"
+$ git config --global user.name "First Last"
+````
 
 ### Install the Simulator
 
@@ -49,33 +55,11 @@ $ git clone https://gitlab.epfl.ch/sacs/distributed-ml/non-iid-topology-simulato
 
 ````
 $ cd non-iid-topology-simulator
-$ ./run.sh
 $ ./test.sh
 ````
 
+## More Usage Examples
 
-
-
-
-
-
-
-
-
-
-## Usage Examples
-
-See https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques/-/tree/master/results
-for more experiment examples. When running from this repository, the $TOOLS
-variable should be updated to point to ````../tools````, and ````sgp-mnist.py```` should be
-replaced with ````simulate.py````. Each experiment will be logged into an all/$DATETIME directory.
-
-# Analyzing Results
-
-## Usage
-
-Multiple experiment results can be used to generate graphs using
-````tool/plot\_convergence.py````.  See
-https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques/-/blob/master/main.tex for
-examples (you still need to update paths and experiment names for your
-setting).
+See https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques/-/tree/master/results-v2
+for more experiment examples: each experiment is named 'experiments.sh' in a
+sub-directory.
