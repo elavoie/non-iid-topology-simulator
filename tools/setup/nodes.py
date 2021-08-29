@@ -96,6 +96,13 @@ def assign_ranges (meta_params, node_params, dataset_params):
 
     return nodes, end
 
+def size(node):
+    assert 'samples' in node.keys(), "Expected 'samples' key on node"
+    samples = node['samples']
+    total = 0
+    for start, end in samples:
+        total += end-start
+    return total
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Partition the Dataset between Nodes.')

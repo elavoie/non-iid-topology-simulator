@@ -4,6 +4,7 @@ import os
 import json
 import sys
 import setup.topology as t
+import setup.meta as m
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print stats about topology')
@@ -13,6 +14,10 @@ if __name__ == '__main__':
 
     for result in args.results:
         print(result) 
+        params = m.params(result)
+        print(params['topology'])
+        print()
+
         topology = t.load(result)
         edges = topology['edges']
         nb_edges = [ len(edges[n]) for n in edges.keys() ]

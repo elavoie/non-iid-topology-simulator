@@ -19,8 +19,10 @@ setup/meta.py \
 setup/dataset.py \
   --name mnist |
 setup/nodes.py \
-  --nb-nodes 4 |
-setup/topology/fully-connected.py |
+  --nb-nodes 20 \
+  --local-classes 1 |
+setup/topology/d-cliques/ideal.py \
+  --interclique fully-connected |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 128 |

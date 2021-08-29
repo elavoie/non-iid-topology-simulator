@@ -54,21 +54,22 @@ def gradient(nodes, topology, params):
     else:
         with torch.no_grad():
             if params['algorithm']['clique-gradient']:
-                for clique in topology.cliques:
+                for clique in topology['cliques']:
                     models = [ nodes[rank]['model'] for rank in clique ]
                     clique_gradients = average_gradients(models)
                     update_gradients(models, clique_gradients)
                     for rank in clique:
                         nodes[rank]['optimizer'].step()
             elif params['algorithm']['unbiased-gradient']:
+                averaging_neighbourhood = topology['averaging-neighbourhood']
                 for n in nodes:
                     rank = n['rank']
-                    models = [ nodes[m]['model'] for m in args.averaging_neighbourhood[rank]]
+                    models = [ nodes[m]['model'] for m in averaging_neighbourhood[rank]]
                     gradients = average_gradients(models)
                     update_gradients([n['model']], gradients)
                     n['optimizer'].step()
             else:
-                raise Exception("Incorrect call to 'd_psgd_unbiased_gradient_single_process', none of --clique-gradient or --unbiased-gradient  options provided")
+                raise Exception('Invalid execution path, previous cases should cover all possibilities.')
 
 def average(nodes, topology, params):
     weights = topology['weights']
@@ -104,6 +105,13 @@ def init(nodes, topology, params):
             batch_size=int(params['algorithm']['batch-size']),
             shuffle=True
         ))
+
+    if params['algorithm']['initial-averaging']:
+        logging.info('d_sgd: averaging initial models')
+        avg_model = average_models([ nodes[rank]['model'] for rank in range(len(nodes)) ])
+        for rank in range(len(nodes)):
+            update_models([nodes[rank]['model']], avg_model)
+
     return (state, 0, False)
 
 def next(state, params):
