@@ -76,24 +76,12 @@ def assign_ranges (meta_params, node_params, dataset_params):
 
     logging.info('assign_classes: classes represented times {}'.format(multiples))
 
-    # Ensure each node has a disjoint set of examples
-    # with all examples are assigned to nodes
-    # Use the same (max) number for all classes to ensure
-    # equal number of training examples regardless
-    # of the class(es) chosen. Repeat examples when necessary.
-    train_examples_not_used_in_val_set = [ ds.numbers[dataset_params['name']]['val_set_number_of_examples'][c] - 
-                          math.floor(ds.numbers[dataset_params['name']]['val_set_number_of_examples'][c] * 
-                                     dataset_params['validation-set-ratio']) for c in range(10) ]
-
-    examples_per_class = max([ ds.numbers[dataset_params['name']]['train_set_number_of_examples'][c] + 
-                               train_examples_not_used_in_val_set[c] for c in range(10) ])
-
     # save [start, end[ for each class of every node where:
     # 'start' is the inclusive start index
     # 'end' is the exclusive end index
     start = [ 0 for i in range(10) ]
     for n in nodes:
-        end = [ start[c] + int(math.ceil(n["classes"][c] * node_params['local-train-ratios'][c] * examples_per_class))  
+        end = [ start[c] + int(n["classes"][c] * node_params['local-train-examples'][c])
                 for c in range(10) ]
         n['samples'] = [(start[c], end[c]) for c in range(10)]
         start = end
@@ -153,12 +141,17 @@ if __name__ == "__main__":
     assert all(map(lambda x: args.nodes_per_class[0] == x, args.nodes_per_class)),\
          'Unsupported unequal nodes_per_class for now.'
 
+    train_evenly_divisible = [(t%n) == 0 for t,n in zip(dataset_params['train-examples-per-class'], args.nodes_per_class)]
+    assert all(train_evenly_divisible),\
+          "Train examples not evenly divisible " +\
+          "by the number of nodes per class: {}".format(train_evenly_divisible)
+
     node_params = {
         'nb-nodes': args.nb_nodes,
         'nodes-per-class': args.nodes_per_class,
         'local-classes': args.local_classes,
-        'local-train-ratios': [ (1./n)*r for r,n in zip(dataset_params['global-train-ratios'], args.nodes_per_class) ],
-        'total-of-examples': [ 0 for _ in dataset_params['global-train-ratios'] ]
+        'local-train-examples': [ int(t/n) for t,n in zip(dataset_params['train-examples-per-class'], args.nodes_per_class )],
+        'total-of-examples': [ x for x in dataset_params['train-examples-per-class'] ]
     }
 
     nodes, total_of_examples = assign_ranges(meta_params, node_params, dataset_params)

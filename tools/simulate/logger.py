@@ -18,6 +18,10 @@ def model_accuracy(model, dataset, params):
     example_number = 0
     num_batches = 0
     total_loss = 0.0
+
+    if len(dataset) == 0:
+        return 0.0, 0.0
+
     with torch.no_grad():
         for data, target in dataset:
             output = model.forward(data, params)

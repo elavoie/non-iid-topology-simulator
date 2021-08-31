@@ -44,7 +44,7 @@ def assign_ranges (params, expected_nb_shards):
     rand.seed(seed)
 
     # Create shards
-    examples_per_class = ds.distinct_train_set_example_size(params)
+    examples_per_class = dataset_params['train-examples-per-class'] 
     shard_size = node_params['shard-size']
     shards = []
     remaining = [ s for s in examples_per_class ]
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=getattr(logging, meta_params['log'].upper(), None))
 
-    examples_per_class = [ t for t in ds.distinct_train_set_example_size(params) ]
+    examples_per_class = [ t for t in dataset_params['train-examples-per-class'] ]
     # Make sure the dataset splits evenly in shards of size 'shard-size'
     assert sum(examples_per_class) % args.shard_size == 0,\
         'Total distinct train examples ({}) do not split evenly in shards of size {}'.format(\

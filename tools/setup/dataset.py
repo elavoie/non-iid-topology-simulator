@@ -72,12 +72,17 @@ numbers['cifar10']['val_set_number_of_examples'] = numbers['cifar10']['original_
 numbers['cifar10']['train_set_number_of_examples'] = [ 4000 for _ in range(10) ]
 
 def validate(dataset_params):
+    dataset_name = dataset_params['name']
     assert dataset_params['name'] == 'mnist' or dataset_params['name'] == 'cifar10',\
         'Unsupported dataset_params {}'.format(dataset_params['name'])
-    assert len(dataset_params['global-train-ratios']) == 10,\
-        'Invalid global-train-ratios length, should have 10 float values'
-    assert all(map(lambda r: r >= 0. and r <= 1., dataset_params['global-train-ratios'])),\
-        'Invalid global-train-ratios: all values should be between [0.,1.] inclusive'
+    assert len(dataset_params['train-examples-per-class']) == len(numbers[dataset_name]['classes']),\
+                "Expected {} train-examples-per-class numbers, got {} instead.".format(\
+                  len(numbers[dataset_name]['classes']),\
+                  len(dataset_params['train-examples-per-class']))
+    assert len(dataset_params['validation-examples-per-class']) == len(numbers[dataset_name]['classes']),\
+            "Expected {} validation-examples-per-class numbers, got {} instead.".format(\
+              len(numbers[dataset_name]['classes']),\
+              len(dataset_params['validation-examples-per-class']))
     return dataset_params
 
 def download(dataset_params):
@@ -175,8 +180,8 @@ def log_train_indexes(rank, train_indexes):
     with open(debug_file, 'w') as debug:
         debug.write('\n'.join(map(str, train_indexes)) + '\n')
 
-def log_validation_indexes(rank, val_indexes):
-    print("Saving validation samples in ./debug/valid.samples, 'cat debug/valid.samples | sort -n | uniq | wc -l' should give 10000.".format(rank))
+def log_validation_indexes(val_indexes):
+    print("Saving validation samples in ./debug/valid.samples, 'cat debug/valid.samples | sort -n | uniq | wc -l' should give 10000.")
     debug_file = os.path.join(os.getcwd(), "debug", "valid.samples")
     with open(debug_file, 'w') as debug:
         debug.write('\n'.join(map(str, val_indexes)) + '\n')
@@ -197,18 +202,12 @@ def partition(node_ranges, _params):
     dataset_params = params(_params)
     nb_classes = dataset_params['nb-classes']
     dataset_name = dataset_params['name']
-    validation_set_nb_examples = numbers[dataset_name]['val_set_number_of_examples']
-    validation_set_ratio = dataset_params['validation-set-ratio'] 
-    train_set_number_of_examples = numbers[dataset_name]['train_set_number_of_examples']
+    validation_examples_per_class = dataset_params['validation-examples-per-class'] 
+    train_set_number_of_examples = numbers[dataset_name]['original_train_set_number_of_examples']
     nodes_params = nodes.params(_params)
     seed = _params['meta']['seed']
     total_of_examples = nodes_params['total-of-examples']
     
-    # In MNIST, available examples might be greater than the remaining training examples
-    # because we resample some examples for smaller classes to have equal training
-    # set sizes, regardless of the classes represented
-    available_examples = max(distinct_train_set_example_size(_params)) * nb_classes
-
     # Deterministically Initialize Pseudo-Random Number Generator
     rand = Random() 
     rand.seed(seed)
@@ -229,10 +228,10 @@ def partition(node_ranges, _params):
     val_indexes = [] 
     for c in range(nb_classes):
         rand_val.shuffle(indexes[c])
-        upper_val_index = math.floor(validation_set_nb_examples[c] * validation_set_ratio)
+        upper_val_index = validation_examples_per_class[c]
         val_indexes.extend(indexes[c][0:upper_val_index])
         indexes[c] = indexes[c][upper_val_index:]
-        if validation_set_ratio == 1.0:
+        if all(map(lambda x: x == 0, validation_examples_per_class)):
             assert len(indexes[c]) == train_set_number_of_examples[c],\
                 "Expected train set for class {} to have {} examples instead of {}".format(
                     c, 
@@ -264,17 +263,15 @@ def partition(node_ranges, _params):
     logging.info('partition: sampling examples for each node')
     partition = []
     for ranges in node_ranges:
+        logging.info('ranges: {}'.format(ranges))
         local = []
         for c in range(nb_classes):
             start,end = tuple(ranges[c])
             local.extend(shuffled[c][start:end])
 
-        ratio = float(len(local))/available_examples
-        logging.info('partition: total number of training examples {} ({:.2f}% of available)'.format(len(local), ratio*100))
-
-        partition.append(local)
         if dataset_params['log-partition-indexes']:
-            log_train_indexes(len(partition), partition)
+            log_train_indexes(len(partition), local)
+        partition.append(local)
 
     if dataset_params['log-partition-indexes']:
         log_validation_indexes(val_indexes)
@@ -287,14 +284,10 @@ def distinct_train_set_example_size (params):
     dataset_params = params['dataset']
     dataset_name = dataset_params['name']
     nb_classes = dataset_params['nb-classes']
-    validation_set_nb_examples = numbers[dataset_name]['val_set_number_of_examples']
-    validation_set_ratio = dataset_params['validation-set-ratio'] 
-    train_set_number_of_examples = numbers[dataset_name]['train_set_number_of_examples']
-    train_examples_not_used_in_val_set = [ validation_set_nb_examples[c] - 
-                          math.floor(validation_set_nb_examples[c] * 
-                                     validation_set_ratio) for c in range(nb_classes) ]
-    return [ train_set_number_of_examples[c] + 
-             train_examples_not_used_in_val_set[c] for c in range(nb_classes) ]
+    validation_examples_per_class = dataset_params['validation-examples-per-class']
+    train_set_number_of_examples = numbers[dataset_name]['original_train_set_number_of_examples']
+    return [ train_set_number_of_examples[c] - validation_examples_per_class[c]
+             for c in range(nb_classes) ]
 
 
 if __name__ == "__main__":
@@ -303,12 +296,17 @@ if __name__ == "__main__":
             help='Directory of the run in which to save the dataset options.')
     parser.add_argument('--name', type=str, default='mnist', choices=['mnist', 'cifar10'],
             help='Name of dataset for training and test. (default: mnist)')
-    parser.add_argument('--global-train-ratios', type=float, default=None, nargs='+',
-            help='Fractions (between [0.,1.] inclusive) of available ' + 
-                 'training examples to use for each class for the entire ' +
-                 'network. (default: [1., ...])')
-    parser.add_argument('--validation-set-ratio', type=float, default=1., metavar='N',
-                        help='Ratio of the validation set to use (of total of 10,000 examples taken from training set, default: 1.)')
+    parser.add_argument('--train-examples-per-class', type=int, default=None, nargs='+',
+            help="Number of examples to use for training for each class. " +\
+                 "Examples used for validation are removed first. " +\
+                 "Then if the requested number is larger than those remaining, " +\
+                 "resampling is done among those." +\
+                 "(default: use all available examples)")
+    parser.add_argument('--validation-examples-per-class', type=int, default=None, nargs='+',
+            help="Number of examples to use for validation (hyper-parameter tuning) per class. " +\
+                 "The maximum number is equal to the test set size." +\
+                 "(default: similar to test set.)")
+
     parser.add_argument('--log-partition-indexes', action='store_const', const=True, default=False, 
             help="Log the indexes of examples for each node X in ./debug/train/X.samples. ( default: False)")
 
@@ -320,16 +318,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
     rundir = m.rundir(args)
 
-    if args.name == 'mnist' or args.name == 'cifar10':
-        if args.global_train_ratios is None:
-            args.global_train_ratios = [ 1. for _ in range(10) ]
+    if args.validation_examples_per_class == None:
+        args.validation_examples_per_class = [ x for x in numbers[args.name]['val_set_number_of_examples'] ]
+
+    if args.train_examples_per_class == None:
+        args.train_examples_per_class = [ (x-v) for v,x in zip(args.validation_examples_per_class, 
+            numbers[args.name]['original_train_set_number_of_examples']) ]
+
 
     dataset = {
        'name': args.name,
-       'global-train-ratios': args.global_train_ratios,
-       'validation-set-ratio': args.validation_set_ratio,
+       'train-examples-per-class': args.train_examples_per_class,
+       'validation-examples-per-class': args.validation_examples_per_class,
        'data-directory': args.data_directory,
-       'nb-classes': 10,
+       'nb-classes': len(numbers[args.name]['classes']),
        'log-partition-indexes': args.log_partition_indexes
     }
 
