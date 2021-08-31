@@ -48,9 +48,13 @@ def assign_ranges (meta_params, node_params, dataset_params):
     def sampler_gen (remaining_classes, k):
         while sum(remaining_classes) > 0:
             choices = []
-            for c in range(10):
-                if remaining_classes[c] > 0:
-                    choices.append(c)
+            max_class = max(remaining_classes)
+            while len(choices) < k:
+                for c in range(10):
+                    if remaining_classes[c] >= max_class:
+                        choices.append(c)
+                max_class -= 1
+
             s = rand.sample(choices, k)
             for c in s:
                 remaining_classes[c] -= 1
@@ -105,7 +109,15 @@ def size(node):
     return total
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Partition the Dataset between Nodes.')
+    parser = argparse.ArgumentParser(description='Partition the Dataset between' +\
+            'Nodes. ' +\
+            ' If nodes-per-class is equal for all classes,' +\
+            ' generate an assignment of classes to nodes such that' +\
+            ' all nodes can be partitioned into subsets of size (nb-classes /' +\
+            ' local-classes) with an equal representation of all classes in' +\
+            ' all subsets. Guarantees an assignment of nodes to cliques of' +\
+            ' size (nb-classes / local-classes) exists with skew of zero for all' +\
+            ' cliques.')
     parser.add_argument('--rundir', type=str, default=None,
         help='Directory of the run in which to save the partition options.')
     parser.add_argument('--nb-nodes', type=int, default=1, metavar='N',
@@ -137,6 +149,9 @@ if __name__ == "__main__":
     elif sum(args.nodes_per_class) != args.nb_nodes * args.local_classes:
         print('Invalid number of nodes per class, should sum to nb-nodes * local-classes')
         sys.exit(1)
+
+    assert all(map(lambda x: args.nodes_per_class[0] == x, args.nodes_per_class)),\
+         'Unsupported unequal nodes_per_class for now.'
 
     node_params = {
         'nb-nodes': args.nb_nodes,
