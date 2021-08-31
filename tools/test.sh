@@ -17,12 +17,18 @@ setup/meta.py \
   --results-directory all \
   --log INFO |
 setup/dataset.py \
-  --name mnist |
-setup/nodes.py \
-  --nb-nodes 20 \
-  --local-classes 1 |
-setup/topology/d-cliques/ideal.py \
-  --interclique fully-connected |
+  --name mnist \
+  --global-train-ratios 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 |
+#  --train-examples
+#  --valid-examples
+setup/nodes/google-fl.py \
+  --nb-nodes 100 \
+  --local-shards 2 \
+  --shard-size 250 |
+#setup/topology/d-cliques/ideal.py \
+#  --interclique fully-connected |
+setup/topology/ring.py \
+  --metric dissimilarity |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 128 |

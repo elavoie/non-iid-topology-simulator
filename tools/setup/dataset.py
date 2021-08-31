@@ -204,15 +204,10 @@ def partition(node_ranges, _params):
     seed = _params['meta']['seed']
     total_of_examples = nodes_params['total-of-examples']
     
-    # Used later for debugging purposes
-    train_examples_not_used_in_val_set = [ validation_set_nb_examples[c] - 
-                          math.floor(validation_set_nb_examples[c] * 
-                                     validation_set_ratio) for c in range(nb_classes) ]
     # In MNIST, available examples might be greater than the remaining training examples
-    # because we repeat some examples for smaller classes to have equal training
+    # because we resample some examples for smaller classes to have equal training
     # set sizes, regardless of the classes represented
-    available_examples = max([ train_set_number_of_examples[c] + 
-                               train_examples_not_used_in_val_set[c] for c in range(nb_classes) ]) * nb_classes
+    available_examples = max(distinct_train_set_example_size(_params)) * nb_classes
 
     # Deterministically Initialize Pseudo-Random Number Generator
     rand = Random() 
@@ -285,6 +280,21 @@ def partition(node_ranges, _params):
         log_validation_indexes(val_indexes)
 
     return partition, val_indexes
+
+# Number of distinct examples available 
+# for training for each class
+def distinct_train_set_example_size (params):
+    dataset_params = params['dataset']
+    dataset_name = dataset_params['name']
+    nb_classes = dataset_params['nb-classes']
+    validation_set_nb_examples = numbers[dataset_name]['val_set_number_of_examples']
+    validation_set_ratio = dataset_params['validation-set-ratio'] 
+    train_set_number_of_examples = numbers[dataset_name]['train_set_number_of_examples']
+    train_examples_not_used_in_val_set = [ validation_set_nb_examples[c] - 
+                          math.floor(validation_set_nb_examples[c] * 
+                                     validation_set_ratio) for c in range(nb_classes) ]
+    return [ train_set_number_of_examples[c] + 
+             train_examples_not_used_in_val_set[c] for c in range(nb_classes) ]
 
 
 if __name__ == "__main__":
