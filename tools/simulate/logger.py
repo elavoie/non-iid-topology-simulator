@@ -72,7 +72,8 @@ class Logger:
         nodes = state['nodes']
         if epoch > 0:
             self.log_train_accuracy(epoch, state)
-        self.log_test_accuracy(epoch, state) 
+        if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
+            self.log_test_accuracy(epoch, state) 
 
     def loss(self, loss):
         assert len(loss) == len(self.running_loss), \
@@ -155,12 +156,15 @@ if __name__ == "__main__":
             help='Directory of the run in which to save options.')
     parser.add_argument('--nb-processes', type=int, default=4, metavar='N',
             help='Number of parallel processes to log the accuracy of models. (default: 8)')
+    parser.add_argument('--accuracy-logging-interval', type=int, default=1, metavar='N',
+                        help='Log validation and test accuracy every X epochs. (default: 1)')
 
     args = parser.parse_args()
     rundir = m.rundir(args)
 
     logger = {
-        'nb-processes': args.nb_processes
+        'nb-processes': args.nb_processes,
+        'accuracy-logging-interval': args.accuracy_logging_interval
     }
     m.extend(rundir, 'logger', logger) # Add to run parameters
 
