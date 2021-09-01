@@ -15,7 +15,8 @@ if __name__ == '__main__':
     for result in args.results:
         print(result) 
         params = m.params(result)
-        print(params['topology'])
+        topology_params = params['topology']
+        print(topology_params)
         print()
 
         topology = t.load(result)
@@ -40,3 +41,26 @@ if __name__ == '__main__':
         print('    edges: {}'.format(sum(nb_edges)))
         print('    nodes: {}'.format(len(nb_edges)))
         print()
+
+        if 'cliques' in topology.keys():
+            print("cliques")
+            if 'max-clique-size' in topology_params:
+                print("    max-clique-size: {}".format(topology_params['max-clique-size']))
+            cliques = topology['cliques']
+            min_clique_size = min([ len(c) for c in cliques ])
+            max_clique_size = max([ len(c) for c in cliques ])
+            print("    nb: {}".format(len(cliques)))
+            print("    max: {}".format(min_clique_size))
+            print("    min: {}".format(max_clique_size))
+            print("    avg: {}".format(sum([ len(c) for c in cliques ])/len(cliques)))
+
+            distribution = {}
+            for s in range(min_clique_size, max_clique_size+1):
+                nb = sum(map(lambda c: 1 if len(c) == s else 0, cliques))
+                if nb > 0:
+                    distribution[s] = nb
+
+            print('    distribution:') 
+            print('        (nb nodes): (nb cliques)')
+            for s in distribution.keys():
+                print('        {}: {}'.format(s, distribution[s]))

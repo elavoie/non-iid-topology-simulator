@@ -263,7 +263,6 @@ def partition(node_ranges, _params):
     logging.info('partition: sampling examples for each node')
     partition = []
     for ranges in node_ranges:
-        logging.info('ranges: {}'.format(ranges))
         local = []
         for c in range(nb_classes):
             start,end = tuple(ranges[c])
