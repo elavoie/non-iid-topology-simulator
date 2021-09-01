@@ -50,8 +50,8 @@ if __name__ == '__main__':
             min_clique_size = min([ len(c) for c in cliques ])
             max_clique_size = max([ len(c) for c in cliques ])
             print("    nb: {}".format(len(cliques)))
-            print("    max: {}".format(min_clique_size))
-            print("    min: {}".format(max_clique_size))
+            print("    min: {}".format(min_clique_size))
+            print("    max: {}".format(max_clique_size))
             print("    avg: {}".format(sum([ len(c) for c in cliques ])/len(cliques)))
 
             distribution = {}

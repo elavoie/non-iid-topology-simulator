@@ -24,7 +24,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, meta['log'].upper(), None))
 
     params = {
-        'name': 'ring',
+        'name': 'fully-connected',
         'weights': args.weights 
     }
     m.extend(rundir, 'topology', params)
