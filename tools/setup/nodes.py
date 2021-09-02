@@ -12,6 +12,10 @@ import setup.dataset as ds
 import setup.meta as m
 import math
 
+def load(rundir):
+    nodes = m.load(rundir, 'nodes.json')
+    return nodes
+
 def params(_params):
     if type(_params) == str:
         params = m.params(_params)

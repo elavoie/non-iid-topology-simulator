@@ -3,8 +3,10 @@ import argparse
 import os
 import json
 import sys
-import setup.topology as t
 import setup.meta as m
+import setup.nodes as ns
+import setup.topology as t
+import setup.topology.d_cliques.metrics as dc_metrics
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Print stats about topology')
@@ -28,7 +30,7 @@ if __name__ == '__main__':
             if nb > 0:
                 distribution[e] = nb
 
-        print("nb edges per node")
+        print("edges per node")
         print('    min: {}'.format(min(nb_edges)))
         print('    max: {}'.format(max(nb_edges)))
         print('    avg: {}'.format(sum(nb_edges)/len(nb_edges)))
@@ -36,10 +38,9 @@ if __name__ == '__main__':
         print('        (nb edges): (nb nodes)')
         for e in distribution.keys():
             print('        {}: {}'.format(e, distribution[e]))
-        print()
-        print("total")
-        print('    edges: {}'.format(sum(nb_edges)))
-        print('    nodes: {}'.format(len(nb_edges)))
+        print("    total")
+        print('        edges: {}'.format(sum(nb_edges)))
+        print('        nodes: {}'.format(len(nb_edges)))
         print()
 
         if 'cliques' in topology.keys():
@@ -64,3 +65,16 @@ if __name__ == '__main__':
             print('        (nb nodes): (nb cliques)')
             for s in distribution.keys():
                 print('        {}: {}'.format(s, distribution[s]))
+
+            print('    skew (compared to global distribution):') 
+            nodes = ns.load(result)
+            global_dist = dc_metrics.dist(nodes)
+            skews = [ (dc_metrics.skew(global_dist, dc_metrics.dist([ nodes[r] for r in c ])), len(c)) for c in cliques ]
+            print("        min: {}".format(min([ s[0] for s in skews ])))
+            print("        max: {}".format(max([ s[0] for s in skews ])))
+            print("        avg: {}".format(sum([ s[0] for s in skews ])/len(skews)))
+            print(skews)
+
+            print()
+            print()
+
