@@ -13,48 +13,26 @@ import setup.nodes
 import setup.topology.metrics as metrics
 from setup.topology.weights import compute_weights
 import interclique
-
-def skew(d1, d2):
-    def valid(d):
-        return all(map(lambda x: x >= 0 and x <= 1, d1)) and\
-               sum(d) >= 0.999999 and\
-               sum(d) <= 1.000001
-
-    assert len(d1) == len(d2), "Inconsistent length between {} and {}".format(d1,d2)
-    assert valid(d1), "Invalid d1 ({}), all values should be between 0 and 1, and sum to 1"
-    assert valid(d2), "Invalid d2 ({}), all values should be between 0 and 1, and sum to 1"
-
-    return sum([ abs(x-y) for x,y in zip(d1,d2) ])
-
-def dist(nodes):
-    nbs = [ 0 for _ in nodes[0]['samples'] ]
-    for n in nodes:
-        samples = n['samples']
-        for i in range(len(nbs)):
-            r = samples[i]
-            nbs[i] += (r[1]-r[0])
-    total = sum(nbs)
-    return [ float(x)/total for x in nbs ]
-
+import metrics
 
 def cliques(_nodes, params):
     max_clique_size = params['topology']['max-clique-size']
     nodes = [ deepcopy(n) for n in _nodes ] 
     for n in nodes:
-        n['dist'] = dist([n])
+        n['dist'] = metrics.dist([n])
 
     cliques = []
-    global_dist = dist(nodes)
+    global_dist = metrics.dist(nodes)
     for n in nodes:
         best = math.inf 
         best_c = None
         for c in cliques:
             if len(c) >= max_clique_size:
                 continue
-            dist_c = dist(c)
-            dist_new_c = dist(c + [n])
-            new = skew(dist_new_c, global_dist)
-            current = skew(dist_c, global_dist)
+            dist_c = metrics.dist(c)
+            dist_new_c = metrics.dist(c + [n])
+            new = metrics.skew(dist_new_c, global_dist)
+            current = metrics.skew(dist_c, global_dist)
             if new < current and new < best:
                 best = new
                 best_c = c
@@ -105,6 +83,7 @@ if __name__ == "__main__":
     # extended by the interclique (interconnect) method. 'edges' therefore
     # both includes the intraclique and interclique edges.
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
+
 
     topology = {
       'edges': { rank: list(edges[rank]) for rank in edges },

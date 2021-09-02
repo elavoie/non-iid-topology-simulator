@@ -26,8 +26,8 @@ def compute_weights(nodes, edges, params):
     else:
         raise Exception("Unimplemented topology_weights {}".format(args.topology_weights))
     eps = torch.finfo(torch.float32).eps
-    assert all((weights.sum(axis=0) - 1.0) < 3*eps), "Weights should sum to 1. Sum is off by {}".format(weights.sum(axis=0) - 1.0)
-    assert all((weights.sum(axis=1) - 1.0) < 3*eps), "Weights should sum to 1. Sum is off by {}".format(weights.sum(axis=1) - 1.0)
+    assert all((weights.sum(axis=0) - 1.0) < 10*eps), "Weights should sum to 1. Sum is off by {}".format(weights.sum(axis=0) - 1.0)
+    assert all((weights.sum(axis=1) - 1.0) < 10*eps), "Weights should sum to 1. Sum is off by {}".format(weights.sum(axis=1) - 1.0)
 
     return weights.tolist()
 

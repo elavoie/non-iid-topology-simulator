@@ -65,6 +65,7 @@ if __name__ == "__main__":
     # In contrast to pseudo code of paper, the edge set is directly
     # extended by the interclique (interconnect) method. 'edges' therefore
     # both includes the intraclique and interclique edges.
+    logging.info(len(cliques))
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
 
     topology = {

@@ -7,9 +7,9 @@ def ring(_cliques, _edges, params):
     edges = { rank: set(_edges[rank]) for rank in _edges }
 
     # create the ring
-    prev = cliques[-1].pop()
+    prev =  cliques[-1].pop() if len(cliques[-1]) > 1 else list(cliques[-1])[0]
     for clique in cliques:
-        current = clique.pop()
+        current = clique.pop() if len(cliques[-1]) > 1 else list(cliques[-1])[0]
         # add edge between current and prev
         edges[prev].add(current)
         edges[current].add(prev)
