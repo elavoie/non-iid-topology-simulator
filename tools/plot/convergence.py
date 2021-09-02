@@ -192,8 +192,8 @@ if __name__ == "__main__":
                     help='Plot accuracy for specific class, instead of global average (default: False).')
     parser.add_argument('--show-std', action='store_const', const=True, default=False,
                     help='Show standard deviation of accuracy, instead of average (default: False).')
-    parser.add_argument('--legend', type=str, default='upper left',
-                    help='Position of legend (default: upper left).')
+    parser.add_argument('--legend', type=str, default='best',
+                    help='Position of legend (default: best).')
     parser.add_argument('--merge-min-max', type=str, nargs='+', default=[],
                     help='Merge the following list of experiments. Min and max are the min and max of all experiments. ')
     parser.add_argument('--no-legend', action='store_const', const=True, default=False,
