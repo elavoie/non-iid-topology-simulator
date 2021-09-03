@@ -89,3 +89,4 @@ if __name__ == "__main__":
 
     if args.rundir is None:
         print(rundir)
+
