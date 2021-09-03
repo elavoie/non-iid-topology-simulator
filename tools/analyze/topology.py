@@ -38,8 +38,9 @@ if __name__ == '__main__':
         print('        (nb edges): (nb nodes)')
         for e in distribution.keys():
             print('        {}: {}'.format(e, distribution[e]))
-        print("    total")
-        print('        edges: {}'.format(sum(nb_edges)))
+        print("    global")
+        total_edges = sum(nb_edges)
+        print('        edges: {}'.format(total_edges))
         print('        nodes: {}'.format(len(nb_edges)))
         print()
 
@@ -73,8 +74,13 @@ if __name__ == '__main__':
             print("        min: {}".format(min([ s[0] for s in skews ])))
             print("        max: {}".format(max([ s[0] for s in skews ])))
             print("        avg: {}".format(sum([ s[0] for s in skews ])/len(skews)))
-            print(skews)
+            print(skews) 
 
+            print('    edges:')
+            intraclique_edges = sum([ len(c)*(len(c)-1) for c in cliques ])
+            print('       intraclique {} ( {:.1f}%)'.format(intraclique_edges, (intraclique_edges/total_edges)*100))
+            interclique_edges = total_edges - intraclique_edges 
+            print('       interclique {} ( {:.1f}%)'.format(interclique_edges, (interclique_edges/total_edges)*100))
             print()
             print()
 

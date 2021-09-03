@@ -135,6 +135,9 @@ def train(_params):
             train=True,
             download=True,
             transform=transform)
+        logging.info(train)
+        logging.info(len(train.targets))
+        logging.info(type(train.targets))
     else:
         print('Unsupported dataset {}'.format(dataset['name']))
         sys.exit(1)
@@ -214,8 +217,9 @@ def partition(node_ranges, _params):
 
     logging.info('partition: split the dataset per class')
     indexes = { x: [] for x in range(nb_classes) }
+    targets = torch.tensor(_train.targets)
     for x in indexes:
-        c = (_train.targets.clone().detach() == x).nonzero()
+        c = (targets.clone().detach() == x).nonzero()
         indexes[x] = c.view(len(c)).tolist()
 
 

@@ -17,22 +17,28 @@ setup/meta.py \
   --results-directory all \
   --log INFO |
 setup/dataset.py \
-  --name mnist \
-  --global-train-ratios 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 0.802568 |
-#  --train-examples
-#  --valid-examples
+  --name cifar10 |
 setup/nodes/google-fl.py \
   --nb-nodes 100 \
   --local-shards 2 \
-  --shard-size 250 |
-#setup/topology/d-cliques/ideal.py \
-#  --interclique fully-connected |
-setup/topology/ring.py \
-  --metric dissimilarity |
-setup/model/linear.py |
+  --shard-size 200 |
+#setup/nodes.py \
+#   --nb-nodes 100 \
+#   --nodes-per-class 10 10 10 10 10 10 10 10 10 10 \
+#   --local-classes 1 |
+setup/topology/d_cliques/centralized-greedy.py \
+  --interclique ring \
+  --max-clique-size 20 |
+#setup/topology/fully-connected.py |
+#  --metric dissimilarity |
+#setup/topology/ring.py \
+#  --metric dissimilarity |
+setup/model/gn_lenet.py |
 simulate/algorithm/d_sgd.py \
-  --batch-size 128 |
+  --clique-gradient \
+  --batch-size 125 |
 simulate/logger.py \
+  --accuracy-logging-interval 10\
   --nb-processes 2 |
 simulate/run.py \
-  --nb-epochs 1
+  --nb-epochs 50
