@@ -39,7 +39,12 @@ def log_task(tasks, params):
     for rank, epoch, step, model_state, event_file in iter(tasks.get, 'STOP'):
         model.load_state_dict(pickle.loads(model_state))
 
-        for name, dataset in [('valid', valid_set), ('test', test_set)]:
+        if params['logger']['skip-testing']:
+            sets = [('valid', valid_set)]
+        else:
+            sets = [('valid', valid_set), ('test', test_set)]
+
+        for name, dataset in sets:
             accuracy, test_loss = model_accuracy(model,dataset,params)
             with open(event_file, 'a') as events:
                 events.write(json.dumps({
@@ -158,13 +163,16 @@ if __name__ == "__main__":
             help='Number of parallel processes to log the accuracy of models. (default: 8)')
     parser.add_argument('--accuracy-logging-interval', type=int, default=1, metavar='N',
                         help='Log validation and test accuracy every X epochs. (default: 1)')
+    parser.add_argument('--skip-testing', action='store_const', const=True, default=False, 
+            help="Skip accuracy measurements on test set. ( default: False)")
 
     args = parser.parse_args()
     rundir = m.rundir(args)
 
     logger = {
         'nb-processes': args.nb_processes,
-        'accuracy-logging-interval': args.accuracy_logging_interval
+        'accuracy-logging-interval': args.accuracy_logging_interval,
+        'skip-testing': args.skip_testing
     }
     m.extend(rundir, 'logger', logger) # Add to run parameters
 
