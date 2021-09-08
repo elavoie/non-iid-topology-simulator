@@ -29,7 +29,7 @@ for MS in 20; do
   setup/model/linear.py |
   simulate/algorithm/d_sgd.py \
     --batch-size 125 \
-    --learning-momemtum 0.0 \
+    --learning-momentum 0.0 \
     --learning-rate 0.1 \
     --clique-gradient |
   simulate/logger.py \
