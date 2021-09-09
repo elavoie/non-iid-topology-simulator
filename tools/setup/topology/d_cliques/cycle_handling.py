@@ -50,38 +50,49 @@ def cliques(nodes, params):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Generate a D-Cliques Topology.')
-    parser.add_argument('--rundir', type=str, default=None,
-      help='Directory of the run in which to save the topology options.')
-    parser.add_argument('--interclique', type=str, default='fully-connected',
-      choices=['ring', 'fractal', 'smallworld', 'fully-connected'],
-      help="Interclique topology (default: 'fully-connected')")
-    parser.add_argument('--weights', type=str, default='metropolis-hasting',
-      choices=['metropolis-hasting', 'equal-clique-probability'],
-      help="Algorithm used to compute weights (default: 'metropolis-hasting').")
+    parser = argparse.ArgumentParser(
+        description='Generate a D-Cliques Topology.')
+    parser.add_argument(
+        '--rundir', type=str, default=None,
+        help='Directory of the run in which to save the topology options.')
+    parser.add_argument(
+        '--interclique', type=str, default='fully-connected',
+        choices=['ring', 'fractal', 'smallworld', 'fully-connected'],
+        help="Interclique topology (default: 'fully-connected')")
+    parser.add_argument(
+        '--weights', type=str, default='metropolis-hasting',
+        choices=['metropolis-hasting', 'equal-clique-probability'],
+        help="Algorithm used to compute weights "
+             "(default: 'metropolis-hasting').")
+    parser.add_argument(
+        '--max-clique-size', type=int, default=30, metavar='N',
+        help='Maximum number of nodes in a clique (default: 30)')
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
     nodes = m.load(rundir, 'nodes.json')
-    logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
+    logging.basicConfig(
+        level=getattr(logging, params['meta']['log'].upper(), None))
 
     topology_params = {
-        'name': 'd-cliques/ideal',
+        'name': 'd-cliques/random-cliques',
         'weights': args.weights,
-        'interclique-topology': args.interclique
+        'interclique-topology': args.interclique,
+        'max-clique-size': args.max_clique_size
     }
     m.extend(rundir, 'topology', topology_params)
 
-    cliques, intra_edges = cliques(nodes, params)
+    cliques, intra_edges = cliques(nodes, m.params(rundir))
     # In contrast to pseudo code of paper, the edge set is directly
     # extended by the interclique (interconnect) method. 'edges' therefore
     # both includes the intraclique and interclique edges.
+    logging.info(len(cliques))
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
 
     topology = {
-      'edges': { rank: list(edges[rank]) for rank in edges },
-      'weights': compute_weights(nodes, edges, topology_params),
-      'cliques': cliques
+        'edges': {rank: list(edges[rank]) for rank in edges},
+        'weights': compute_weights(nodes, edges, topology_params),
+        'cliques': cliques
     }
     with open(os.path.join(rundir, 'topology.json'), 'w+') as topology_file:
         json.dump(topology, topology_file)
