@@ -21,7 +21,7 @@ def cliques(nodes, params):
     max_clique_size = params['topology']['max-clique-size']
 
     all_cliques = []
-    global_distribution = metrics.dist(nodes)
+    global_distribution = np.array(metrics.dist(nodes))
     for i in range(len(nodes)):
         all_cliques.append(cycle_handling.DecentralizedClique(metrics.dist(
             [nodes[i]]), global_distribution, nodes[i]["rank"]))
