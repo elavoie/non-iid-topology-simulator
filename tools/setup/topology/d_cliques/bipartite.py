@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import argparse
-import logging
 import json
 from random import Random
 
@@ -14,15 +13,17 @@ import metrics
 import interclique
 import decentralized_algorithms.decentralized_greedy_bipartite_graph as dgb
 
+import logging
+
 
 def cliques(_nodes, _params):
     max_clique_size = _params['topology']['max-clique-size']
-    _nodes = set([n['rank'] for n in _nodes])
+    # _nodes = [n['rank'] for n in _nodes]
     rand = Random()
     rand.seed(_params['meta']['seed'])
 
     rng = np.random.default_rng(_params['meta']['seed'])
-    global_distribution = metrics.dist(_nodes)
+    global_distribution = np.array(metrics.dist(_nodes))
     all_cliques = []
     for n in _nodes:
         all_cliques.append(
@@ -33,13 +34,17 @@ def cliques(_nodes, _params):
         all_cliques, rng, global_distribution, iterations=30,
         max_n_nodes=max_clique_size)
 
+    cliques_as_lists = []
+    for c in _cliques:
+        cliques_as_lists.append(c.nodes_ids)
+
     _edges = {}
     for c in _cliques:
         ranks = set(c.nodes_ids)
         for rank in ranks:
             _edges[rank] = ranks.difference([rank])
 
-    return _cliques, _edges
+    return cliques_as_lists, _edges
 
 
 if __name__ == "__main__":
