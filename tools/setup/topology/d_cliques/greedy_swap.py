@@ -89,7 +89,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
 
     topology_params = {
-        'name': 'd-cliques/random-greedy-cliques',
+        'name': 'd-cliques/greedy-swap',
         'weights': args.weights,
         'interclique-topology': args.interclique,
         'max-clique-size': args.max_clique_size,
