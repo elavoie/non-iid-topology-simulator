@@ -36,13 +36,17 @@ def cliques(nodes, params):
     all_cliques, _ = cycle_handling.decentralized_greedy_resolving_conflicts(
         **decentralized_greedy_parameters)
 
+    cliques_as_lists = []
+    for c in all_cliques:
+        cliques_as_lists.append(c.nodes_ids)
+
     edges = {}
     for c in all_cliques:
         ranks = set(c.nodes_ids)
         for rank in ranks:
             edges[rank] = ranks.difference([rank])
 
-    return cliques, edges
+    return cliques_as_lists, edges
 
 
 if __name__ == "__main__":
