@@ -3,8 +3,9 @@ import pickle
 import time
 from pathlib import Path
 
-import greedy_with_pre_comp_of_D_changed as greedy_funcs
-import functions
+import decentralized_algorithms.greedy_with_pre_comp_of_D_changed as \
+    greedy_funcs
+import decentralized_algorithms.functions as functions
 
 
 class DecentralizedClique(greedy_funcs.Clique):

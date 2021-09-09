@@ -1,8 +1,9 @@
 import numpy as np
 
-import greedy_with_pre_comp_of_D_changed as greedyFuncs
-import functions
-import decentralized_greedy_resolving_conflicts as dgrc
+
+import decentralized_algorithms.functions as functions
+import decentralized_algorithms.decentralized_greedy_resolving_conflicts as dgrc
+import decentralized_algorithms.greedy_with_pre_comp_of_D_changed as greedyFuncs
 
 
 class DecentralizedClique(greedyFuncs.Clique):
@@ -38,7 +39,7 @@ class DecentralizedClique(greedyFuncs.Clique):
         self.sum_all_nodes_approximate += clique.sum_all_nodes_approximate
         self.approximate_global_distribution = \
             self.sum_all_nodes_approximate / len(clique.all_nodes)
-        self.nodes_ids.extend(clique.nodes_idsZ)
+        self.nodes_ids.extend(clique.nodes_ids)
 
     def choose_group(self, rng):
         self.group = rng.integers(2)
