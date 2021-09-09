@@ -37,5 +37,5 @@ for MS in 20; do
     --skip-testing\
     --nb-processes 2 |
   simulate/run.py \
-    --nb-epochs 1;
+    --nb-epochs 100;
 done
