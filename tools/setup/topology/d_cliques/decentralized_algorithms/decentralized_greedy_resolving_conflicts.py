@@ -21,6 +21,7 @@ class DecentralizedClique(greedy_funcs.Clique):
         self.nodes_that_prefer_me = []
         self.current_preferee = None
         self.will_live = False
+        self.nodes_ids = [self.clique_id]
 
     @staticmethod
     def get_cycle_from_graph(graph, clique_id):
@@ -42,6 +43,7 @@ class DecentralizedClique(greedy_funcs.Clique):
         self.sum_all_nodes_approximate += clique.sum_all_nodes_approximate
         self.approximate_global_distribution = self.sum_all_nodes_approximate / len(
             clique.all_nodes)
+        self.nodes_ids += clique.nodes_ids
 
     def reset_clique(self, preferee, clique_id):
         self.current_preferee = preferee
