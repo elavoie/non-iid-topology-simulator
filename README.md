@@ -33,6 +33,15 @@ $ conda install pytorch torchvision
 
 Successfully tested with pytorch v1.7.1, torchvision 0.8.2.
 
+
+### Install Additional Packages
+
+````
+$ conda install matplotlib scipy
+````
+
+Successfully tested with matplotlib 3.4.2, scipy 1.6.2.
+
 ### Git
 
 ````
@@ -54,7 +63,7 @@ $ git clone https://gitlab.epfl.ch/sacs/distributed-ml/non-iid-topology-simulato
 ### Run the test experiment
 
 ````
-$ cd non-iid-topology-simulator
+$ cd non-iid-topology-simulator/tools
 $ ./test.sh
 ````
 
