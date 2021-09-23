@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # Logger initialized here so logging processes are siblings of the main
     # process. Avoids deadlock on Linux (see below).
     logging.info('Starting logger')
-    log = logger.init(params)
+    log = logger.init(params, rundir)
 
     def run(log, rundir, params):
         seed = params['meta']['seed']

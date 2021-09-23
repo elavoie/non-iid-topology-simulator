@@ -3,21 +3,9 @@ import torch
 import argparse
 import setup.meta as m
 import logging
-import setup.model as model
+import setup.model
 from torch.autograd import Variable
 import torch.nn.functional as F
-
-def average_models(models, weights=None):
-    with torch.no_grad():
-        if weights == None:
-            weights = [ float(1./len(models)) for _ in range(len(models)) ]
-        center_model = models[0].copy()
-        for p in center_model.parameters():
-            p.mul_(0)
-        for m, w in zip(models, weights):
-            for c1, p1 in zip(center_model.parameters(), m.parameters()):
-                c1.add_(w*p1)
-        return center_model
 
 def average_gradients(models):
     with torch.no_grad():
@@ -83,7 +71,7 @@ def average(nodes, topology, params):
             rank = n['rank']
             models = [ n['model'] ] + [ nodes[src]['model'] for src in edges[rank] ] 
             _weights = [ weights[rank,rank] ] + [ weights[src,rank] for src in edges[rank] ]
-            averaged[rank] = average_models(models, _weights) 
+            averaged[rank] = setup.model.average(models, _weights) 
 
         # Update models
         for n in nodes:

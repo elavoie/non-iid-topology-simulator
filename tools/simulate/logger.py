@@ -4,6 +4,7 @@ import logging
 import json
 import pickle
 import copy
+import os
 from importlib import import_module
 import torch
 import torch.nn.functional as F
@@ -11,6 +12,8 @@ from torch.autograd import Variable
 from torch.multiprocessing import Process, JoinableQueue, Pipe
 import setup.meta as m
 import setup.dataset as d
+import setup.model
+import statistics
 
 def model_accuracy(model, dataset, params):
     model.eval()
@@ -31,6 +34,14 @@ def model_accuracy(model, dataset, params):
             example_number += target.size(0)
             num_batches += 1
     return float(correct)/float(example_number), total_loss / float(num_batches)
+
+def model_distance(model1, model2):
+    # Compute Euclidean distance (L2-norm) considering all parameters
+    with torch.no_grad():
+        ds = torch.tensor([
+            torch.sum((p1 - p2)**2) for p1, p2 in zip(model1.parameters(), model2.parameters())
+        ])
+        return torch.sqrt(torch.sum(ds)).tolist()
 
 def log_task(tasks, params):
     valid_set = torch.utils.data.DataLoader(d.valid(params), 100)
@@ -59,11 +70,13 @@ def log_task(tasks, params):
         tasks.task_done()
 
 class Logger:
-    def __init__(self, params):
+    def __init__(self, params, rundir):
         nb_nodes = params['nodes']['nb-nodes']
         self.params = params
+        self.rundir = rundir
         self.running_loss = [ 0.0 for _ in range(nb_nodes) ]
         self.running_loss_count = 0
+        self.global_events = os.path.join(rundir, 'events', 'global.jsonlines')
 
         self.tasks = JoinableQueue(maxsize=nb_nodes)
         self.processes = []
@@ -79,6 +92,7 @@ class Logger:
             self.log_train_accuracy(epoch, state)
         if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
             self.log_test_accuracy(epoch, state) 
+        self.log_consensus_distance(epoch, state)
 
     def loss(self, loss):
         assert len(loss) == len(self.running_loss), \
@@ -145,15 +159,36 @@ class Logger:
             self.tasks.put((n['rank'], epoch, step, pickle.dumps(n['model'].state_dict()), event_file))
         self.tasks.join()
         
+    def log_consensus_distance(self, epoch, state):
+        models = [ n['model'] for n in state['nodes'] ]
+        center = setup.model.average(models)
+        distances = [ model_distance(center, m) for m in models ]
+        avg = statistics.mean(distances)
+        std = statistics.stdev(distances) if len(distances) > 1 else 0.
+
+        with open(self.global_events, 'a') as events:
+            events.write(json.dumps({
+                "type": "consensus-distance",
+                "epoch": epoch,
+                "distance_to_center": {
+                    "global": {
+                        "avg": avg,
+                        "std": std,
+                        "max": max(distances),
+                        "min": min(distances)
+                    }
+                }
+            }) + '\n')
+        
     def stop(self):
         for _ in range(self.params['logger']['nb-processes']): 
             self.tasks.put('STOP')
         for p in self.processes:
             p.join()
 
-def init(params):
+def init(params, rundir):
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
-    return Logger(params)
+    return Logger(params, rundir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Log events happening during simulation.')
