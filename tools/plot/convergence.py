@@ -31,13 +31,14 @@ def get_data(result, args):
         conv = convergence.from_dir(result, test_set='test')
         conv = conv if args.class_index is None else conv['classes'][args.class_index]
         ydata = [ acc*100. for acc in conv['avg'] ]
-    elif args.yaxis == 'scattering':
+    elif args.yaxis == 'scattering' or args.yaxis == 'consensus-distance':
         with open(os.path.join(result, 'events', 'global.jsonlines'), 'r') as global_file:
             events = []
             for line in global_file:
                 e = json.loads(line)
                 events.append(e)
-        ydata = [ e['distance_to_center']['global']['avg'] for e in events if e['type'] == 'model-scattering' ]
+        ydata = [ e['distance_to_center']['global']['avg'] for e in events 
+                  if e['type'] == 'model-scattering' or  e['type'] == 'consensus-distance' ]
     elif args.yaxis == 'center-shift' or args.yaxis == 'efficiency' or args.yaxis == 'average-distance-travelled':
         events = []
         with open(os.path.join(result, 'events', 'global.jsonlines'), 'r') as global_file:
@@ -67,6 +68,7 @@ def get_data(result, args):
        args.yaxis == 'running-training-loss' or \
        args.yaxis == 'center-shift' or \
        args.yaxis == 'scattering' or \
+       args.yaxis == 'consensus-distance' or \
        args.yaxis == 'average-distance-travelled' or \
        args.yaxis == 'efficiency':
         xdata = range(1,1+len(ydata))
@@ -176,7 +178,7 @@ if __name__ == "__main__":
                     help='experiment result')
     parser.add_argument('--save-figure', type=str, default=None,
                     help='File in which to save figure.')
-    parser.add_argument('--yaxis', type=str, default='validation-accuracy', choices=['validation-accuracy', 'test-accuracy', 'training-accuracy', 'training-loss', 'running-training-loss', 'scattering', 'center-shift', 'average-distance-travelled', 'efficiency'],
+    parser.add_argument('--yaxis', type=str, default='validation-accuracy', choices=['validation-accuracy', 'test-accuracy', 'training-accuracy', 'training-loss', 'running-training-loss', 'scattering', 'center-shift', 'average-distance-travelled', 'efficiency', 'consensus-distance'],
                     help='Metric to use on the yaxis. Computes average for all the nodes. (default: validation-accuracy)')
     parser.add_argument('--ymin', type=float, default=0.,
                     help='Minimum value on the y axis')
@@ -337,8 +339,8 @@ if __name__ == "__main__":
         ylabel = 'Validation Accuracy (%)' if args.show_std is not True else 'Std of Validation Accuracy (%)'
     elif args.yaxis == 'test-accuracy':
         ylabel = 'Test Accuracy (%)' if args.show_std is not True else 'Std of Test Accuracy (%)'
-    elif args.yaxis == 'scattering':
-        ylabel = 'Scattering'
+    elif args.yaxis == 'scattering' or args.yaxis == 'consensus-distance':
+        ylabel = 'Consensus Distance'
     elif args.yaxis == 'center-shift':
         ylabel = 'Center Shift'
     elif args.yaxis == 'average-distance-travelled':
