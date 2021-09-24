@@ -217,7 +217,10 @@ def partition(node_ranges, _params):
 
     logging.info('partition: split the dataset per class')
     indexes = { x: [] for x in range(nb_classes) }
-    targets = torch.tensor(_train.targets)
+    if type(_train.targets) != torch.Tensor:
+        targets = torch.tensor(_train.targets)
+    else:
+        targets = _train.targets
     for x in indexes:
         c = (targets.clone().detach() == x).nonzero()
         indexes[x] = c.view(len(c)).tolist()
