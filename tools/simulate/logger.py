@@ -5,6 +5,7 @@ import json
 import pickle
 import copy
 import os
+import math
 from importlib import import_module
 import torch
 import torch.nn.functional as F
@@ -166,6 +167,9 @@ class Logger:
         avg = statistics.mean(distances)
         std = statistics.stdev(distances) if len(distances) > 1 else 0.
 
+        with torch.no_grad():
+            norm = math.sqrt(sum([ torch.sum(p**2).tolist() for p in center.parameters() ]))
+
         with open(self.global_events, 'a') as events:
             events.write(json.dumps({
                 "type": "consensus-distance",
@@ -177,6 +181,9 @@ class Logger:
                         "max": max(distances),
                         "min": min(distances)
                     }
+                },
+                "center": {
+                    "norm": norm
                 }
             }) + '\n')
         
