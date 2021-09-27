@@ -33,7 +33,7 @@ def model_accuracy(model, dataset, params):
             correct += pred.eq(target.view_as(pred)).sum().item()
             example_number += target.size(0)
             num_batches += 1
-    return float(correct)/float(example_number), total_loss / float(num_batches)
+    return float(correct)/float(example_number), total_loss / float(example_number)
 
 def model_distance(model1, model2):
     # Compute Euclidean distance (L2-norm) considering all parameters

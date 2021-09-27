@@ -123,16 +123,16 @@ def next(state, params):
             epoch_done.append(True)
 
     assert all(epoch_done) or not any(epoch_done), "Some nodes completed their epoch before others."
-    
-    # Apply Gradients
-    gradient(nodes, topology, params)
+   
+    if not all(epoch_done):
+        # Apply Gradients
+        gradient(nodes, topology, params)
 
-    # Average with Neighbours
-    average(nodes, topology, params)
+        # Average with Neighbours
+        average(nodes, topology, params)
 
-    state['step'] += 1
-
-    if all(epoch_done):
+        state['step'] += 1
+    else:
         for n in nodes:
             n['train-iterator'] = iter(torch.utils.data.DataLoader(
                 n['train-set'], 
