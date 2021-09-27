@@ -225,6 +225,9 @@ def partition(node_ranges, _params):
         c = (targets.clone().detach() == x).nonzero()
         indexes[x] = c.view(len(c)).tolist()
 
+    # Store the classes for every index for sanity checking later
+    classes = { i: targets[i].tolist() \
+                for i in range(len(targets)) }
 
     # We create a validation set from the training examples
     # to tune hyper-parameters. The validation set is the same
@@ -281,6 +284,30 @@ def partition(node_ranges, _params):
 
     if dataset_params['log-partition-indexes']:
         log_validation_indexes(val_indexes)
+
+    # Sanity checking of class frequency for each node
+    for n in range(len(partition)):
+        local = partition[n]
+        freq = { c: 0 for c in range(nb_classes) }
+        for i in local:
+            freq[classes[i]] += 1
+
+        ranges = node_ranges[n]
+        for c in range(nb_classes):
+            start,end = tuple(ranges[c])
+            assert freq[c] == end-start, 'Error in partitioning'
+
+    # Sanity checking that we are using distinct examples up to the
+    # number of available examples
+    if len(node_ranges) > 0:
+        all_indexes = set()
+        for local in partition:
+            all_indexes.update(local)
+        max_indexes = sum([ len(indexes[c]) for c in range(nb_classes) ])
+        assert len(all_indexes) == min(sum(total_of_examples), max_indexes), \
+           'Expected {} distinct examples but got {}'.format(\
+                  sum(total_of_examples), \
+                  len(all_indexes))
 
     return partition, val_indexes
 
