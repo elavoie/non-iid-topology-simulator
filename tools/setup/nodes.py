@@ -119,6 +119,8 @@ if __name__ == "__main__":
     parser.add_argument('--local-classes', type=int, default=10,
         help='Number of classes represented in a single node (classes are ' + 
         'chosen randomly). (default: 10)')
+    parser.add_argument('--name', type=str, default='',
+        help='Name given to this partition scheme.')
 
     args = parser.parse_args()
     rundir = m.rundir(args)
@@ -151,6 +153,7 @@ if __name__ == "__main__":
           "by the number of nodes per class: {}".format(train_evenly_divisible)
 
     node_params = {
+        'name':  args.name,
         'nb-nodes': args.nb_nodes,
         'nodes-per-class': args.nodes_per_class,
         'local-classes': args.local_classes,

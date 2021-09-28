@@ -113,6 +113,8 @@ if __name__ == "__main__":
         help='Size of shards in which to divide the examples used for each class. (default: 250)')
     parser.add_argument('--local-shards', type=int, default=2,
         help='Number of shards per node. (default: 2)')
+    parser.add_argument('--name', type=str, default='',
+        help='Name given to this partition scheme.')
 
     args = parser.parse_args()
     rundir = m.rundir(args)
@@ -136,6 +138,7 @@ if __name__ == "__main__":
         nb_shards, args.nb_nodes)
 
     node_params = {
+        'name': args.name,
         'nb-nodes': args.nb_nodes,
         'local-shards': args.local_shards,
         'shard-size': args.shard_size,
