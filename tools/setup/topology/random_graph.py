@@ -70,7 +70,7 @@ if __name__ == "__main__":
     edges = create(nodes, params)
     topology = {
       'edges': edges,
-      'weights': compute_weights(nodes, edges, params),
+      'weights': compute_weights(nodes, edges, topology_params),
     }
     with open(os.path.join(rundir, 'topology.json'), 'w+') as topology_file:
         json.dump(topology, topology_file)

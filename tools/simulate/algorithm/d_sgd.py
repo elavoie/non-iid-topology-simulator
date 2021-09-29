@@ -49,10 +49,10 @@ def gradient(nodes, topology, params):
                     for rank in clique:
                         nodes[rank]['optimizer'].step()
             elif params['algorithm']['unbiased-gradient']:
-                averaging_neighbourhood = topology['averaging-neighbourhood']
+                neighbourhoods = topology['neighbourhoods']
                 for n in nodes:
                     rank = n['rank']
-                    models = [ nodes[m]['model'] for m in averaging_neighbourhood[rank]]
+                    models = [ nodes[m]['model'] for m in neighbourhoods[rank]]
                     gradients = average_gradients(models)
                     update_gradients([n['model']], gradients)
                     n['optimizer'].step()

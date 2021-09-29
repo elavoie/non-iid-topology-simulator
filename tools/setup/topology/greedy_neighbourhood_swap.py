@@ -70,7 +70,7 @@ def create(nodes, params):
     skews = [ skew(edges[rank].union({rank})) for rank in edges ]
     logging.info('final skew min {:.3f} max {:.3f} avg {:.3f}'.format(min(skews), max(skews), sum(skews)/len(nodes)))
 
-    return { rank: list(edges[rank]) for rank in edges }
+    return { rank: list(edges[rank]) for rank in edges }, { rank: list(edges[rank].union({rank})) for rank in edges }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate a Random Graph Topology with ' +\
@@ -99,15 +99,16 @@ if __name__ == "__main__":
         'name': 'greedy-neighbourhood-swap',
         'nb-neighbours': args.nb_neighbours,
         'nb-passes': args.nb_passes,
-        'weights': args.weights 
+        'weights': args.weights
     }
     m.extend(rundir, 'topology', topology_params)
     params = m.params(rundir)
 
-    edges = create(nodes, params)
+    edges, neighbourhoods = create(nodes, params)
     topology = {
       'edges': edges,
       'weights': compute_weights(nodes, edges, topology_params),
+      'neighbourhoods': neighbourhoods
     }
     with open(os.path.join(rundir, 'topology.json'), 'w+') as topology_file:
         json.dump(topology, topology_file)
