@@ -881,6 +881,7 @@ def greedy_diverse_ten(nodes, metric, position=None, rank=None, args={}):
             edges[neighbour].add(rank)
 
     for n in nodes:
+        rank = n['rank']
         assert len(edges[rank]) == 10
         classes = n['classes'].copy()
         for m in edges[n['rank']]:

@@ -58,7 +58,7 @@ def cliques(nodes, params):
             skews = [ metrics.skew(metrics.dist([ nodes[r] for r in c]), global_dist) for c in cliques ]
             last = k
 
-    logging.info('last step {:3d} skew min {:.2f} max {:.2f} avg {:.2f}'.format(last, min(skews), max(skews), sum(skews)/len(skews)))
+    logging.info('last step {:3d} skew min {:.3f} max {:.3f} avg {:.3f}'.format(last, min(skews), max(skews), sum(skews)/len(skews)))
 
     edges = {}
     for c in cliques:
