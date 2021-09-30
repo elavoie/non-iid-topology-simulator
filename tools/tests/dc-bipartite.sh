@@ -2,26 +2,26 @@
 # Path to current script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Add current working directory to executable namespace
-export PATH=$PATH:./
+export PATH=$PATH:$SCRIPT_DIR/../
 # Setup root directory for resolution of imports:
 # the path of all local python libraries are relative to this
-export PYTHONPATH=$SCRIPT_DIR
+export PYTHONPATH=$SCRIPT_DIR/../
 
-cd $SCRIPT_DIR
+cd $SCRIPT_DIR/../
 
 # Each command outputs the run directory, which is then used
 # by the next command to add parameters and generate information
 # used by the simulator. For a list of available options for each
 # command, run 'export PYTHONPATH=.; <command> --help'.
-for MS in 20; do
+for MS in 10; do
   setup/meta.py \
-    --results-directory all \
+    --results-directory $SCRIPT_DIR/all \
     --seed 1|
   setup/dataset.py \
     --name mnist |
   setup/nodes/google-fl.py \
-    --nb-nodes 100 \
-    --local-shards 2 \
+    --nb-nodes 20 \
+    --local-shards 10 \
     --shard-size 250 |
   setup/topology/d_cliques/bipartite.py \
     --interclique fully-connected \
@@ -33,9 +33,9 @@ for MS in 20; do
     --learning-rate 0.1 \
     --clique-gradient |
   simulate/logger.py \
-    --accuracy-logging-interval 10\
+    --accuracy-logging-interval 2\
     --skip-testing\
     --nb-processes 2 |
   simulate/run.py \
-    --nb-epochs 100;
+    --nb-epochs 2;
 done

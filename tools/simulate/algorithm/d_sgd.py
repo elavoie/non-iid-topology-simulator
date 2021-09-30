@@ -42,7 +42,8 @@ def gradient(nodes, topology, params):
     else:
         with torch.no_grad():
             if params['algorithm']['clique-gradient']:
-                if params['topology']['remove-clique-edges'] == 0:
+                if not 'remove-clique-edges' in params['topology'].keys() \
+                   or params['topology']['remove-clique-edges'] == 0:
                     for clique in topology['cliques']:
                         models = [ nodes[rank]['model'] for rank in clique ]
                         clique_gradients = average_gradients(models)
