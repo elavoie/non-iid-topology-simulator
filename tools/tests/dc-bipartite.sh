@@ -33,9 +33,9 @@ for MS in 10; do
     --learning-rate 0.1 \
     --clique-gradient |
   simulate/logger.py \
-    --accuracy-logging-interval 2\
+    --accuracy-logging-interval 1\
     --skip-testing\
     --nb-processes 2 |
   simulate/run.py \
-    --nb-epochs 2;
+    --nb-epochs 1;
 done
