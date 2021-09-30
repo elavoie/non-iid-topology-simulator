@@ -11,6 +11,7 @@ import setup.nodes
 import setup.topology.metrics as metrics
 from setup.topology.weights import compute_weights
 import interclique
+import utils
 
 def cliques(nodes, params):
     assert 'dataset' in params.keys(), "Missing 'dataset' params."
@@ -64,6 +65,8 @@ if __name__ == "__main__":
     parser.add_argument('--weights', type=str, default='metropolis-hasting', 
       choices=['metropolis-hasting', 'equal-clique-probability'],
       help="Algorithm used to compute weights (default: 'metropolis-hasting').")
+    parser.add_argument('--remove-clique-edges', type=int, default=0, metavar='N', 
+            help="Remove X random edges from each clique. ( default: 0)")
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
@@ -73,15 +76,19 @@ if __name__ == "__main__":
     topology_params = {
         'name': 'd-cliques/ideal',
         'weights': args.weights,
-        'interclique-topology': args.interclique
+        'interclique-topology': args.interclique,
+        'remove-clique-edges': args.remove_clique_edges
     }
     m.extend(rundir, 'topology', topology_params)
+    params = m.params(rundir) # reload extended
 
     cliques, intra_edges  = cliques(nodes, params)
     # In contrast to pseudo code of paper, the edge set is directly
     # extended by the interclique (interconnect) method. 'edges' therefore
     # both includes the intraclique and interclique edges.
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
+    if topology_params['remove-clique-edges'] > 0: 
+        edges, cliques = utils.remove_clique_edges(edges, cliques, params)
 
     topology = {
       'edges': { rank: list(edges[rank]) for rank in edges },

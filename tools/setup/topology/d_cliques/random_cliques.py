@@ -13,6 +13,7 @@ import setup.nodes
 import setup.topology.metrics as metrics
 from setup.topology.weights import compute_weights
 import interclique
+import utils
 
 def cliques(_nodes, params):
     max_clique_size = params['topology']['max-clique-size']
@@ -47,6 +48,8 @@ if __name__ == "__main__":
       help="Algorithm used to compute weights (default: 'metropolis-hasting').")
     parser.add_argument('--max-clique-size', type=int, default=30, metavar='N',
         help='Maximum number of nodes in a clique (default: 30)')
+    parser.add_argument('--remove-clique-edges', type=int, default=0, metavar='N', 
+            help="Remove X random edges from each clique. ( default: 0)")
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
@@ -57,9 +60,11 @@ if __name__ == "__main__":
         'name': 'd-cliques/random-cliques',
         'weights': args.weights,
         'interclique-topology': args.interclique,
-        'max-clique-size': args.max_clique_size
+        'max-clique-size': args.max_clique_size,
+        'remove-clique-edges': args.remove_clique_edges
     }
     m.extend(rundir, 'topology', topology_params)
+    params = m.params(rundir) # reload extended
 
     cliques, intra_edges  = cliques(nodes, m.params(rundir))
     # In contrast to pseudo code of paper, the edge set is directly
@@ -67,6 +72,8 @@ if __name__ == "__main__":
     # both includes the intraclique and interclique edges.
     logging.info(len(cliques))
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
+    if topology_params['remove-clique-edges'] > 0: 
+        edges, cliques = utils.remove_clique_edges(edges, cliques, params)
 
     topology = {
       'edges': { rank: list(edges[rank]) for rank in edges },

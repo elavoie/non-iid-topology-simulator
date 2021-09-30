@@ -13,6 +13,7 @@ import setup.nodes
 import metrics
 from setup.topology.weights import compute_weights
 import interclique
+import utils
 
 def cliques(nodes, params):
     # Random assignment
@@ -82,6 +83,8 @@ if __name__ == "__main__":
         help='Maximum number of nodes in a clique (default: 30)')
     parser.add_argument('--max-steps', type=int, default=1000, metavar='N',
         help='Maximum number of steps to consider after initial random clique generation (default: 1000).')
+    parser.add_argument('--remove-clique-edges', type=int, default=0, metavar='N', 
+            help="Remove X random edges from each clique. ( default: 0)")
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
@@ -93,12 +96,16 @@ if __name__ == "__main__":
         'weights': args.weights,
         'interclique-topology': args.interclique,
         'max-clique-size': args.max_clique_size,
-        'max-steps': args.max_steps
+        'max-steps': args.max_steps,
+        'remove-clique-edges': args.remove_clique_edges
     }
     m.extend(rundir, 'topology', topology_params)
+    params = m.params(rundir) # reload extended
 
-    cliques, intra_edges  = cliques(nodes, m.params(rundir))
+    cliques, intra_edges  = cliques(nodes, params)
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
+    if topology_params['remove-clique-edges'] > 0: 
+        edges, cliques = utils.remove_clique_edges(edges, cliques, params)
 
     topology = {
       'edges': { rank: list(edges[rank]) for rank in edges },
