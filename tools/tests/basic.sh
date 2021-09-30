@@ -2,12 +2,12 @@
 # Path to current script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Add current working directory to executable namespace
-export PATH=$PATH:./
+export PATH=$PATH:$SCRIPT_DIR/../
 # Setup root directory for resolution of imports:
 # the path of all local python libraries are relative to this
-export PYTHONPATH=$SCRIPT_DIR
+export PYTHONPATH=$SCRIPT_DIR/../
 
-cd $SCRIPT_DIR
+cd $SCRIPT_DIR/../
 
 # Each command outputs the run directory, which is then used
 # by the next command to add parameters and generate information

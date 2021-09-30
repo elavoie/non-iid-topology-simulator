@@ -64,7 +64,7 @@ $ git clone https://gitlab.epfl.ch/sacs/distributed-ml/non-iid-topology-simulato
 
 ````
 $ cd non-iid-topology-simulator/tools
-$ ./test.sh
+$ tests/basic.sh
 ````
 
 ## Suggested Complementary Installations
@@ -82,4 +82,4 @@ or install with:
 $ git clone https://gitlab.epfl.ch/sacs/distributed-ml/d-cliques.git
 ````
 
-Each experiment is named 'experiments.sh' in a sub-directory of 'results-v2'.
+Each experiment is a different '*.sh' script. 

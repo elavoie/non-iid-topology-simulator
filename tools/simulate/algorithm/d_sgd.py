@@ -4,6 +4,7 @@ import argparse
 import setup.meta as m
 import logging
 import setup.model
+import setup.topology as t
 from torch.autograd import Variable
 import torch.nn.functional as F
 
@@ -176,14 +177,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
+    topology = t.load(rundir)
 
     if args.clique_gradient:
-        assert 'cliques' in params['topology'].keys(), \
+        assert 'cliques' in topology.keys(), \
            "Invalid --clique-gradient with {} topology".format(params['topology']['name']) +\
            ", no 'cliques' found in topology.json."
 
     if args.unbiased_gradient:
-        assert 'neighbourhoods' in params['topology'].keys(), \
+        assert 'neighbourhoods' in topology.keys(), \
            "Invalid --unbiased-gradient with {} topology".format(params['topology']['name']) +\
            ", no 'neighbourhoods' found in topology.json."
 
