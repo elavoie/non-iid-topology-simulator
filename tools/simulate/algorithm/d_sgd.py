@@ -175,6 +175,17 @@ if __name__ == "__main__":
             help="Use the average gradient of a subset of neighbours representing equally all classes. Only works with the 'greedy-diverse-10' topology ( default: False)")
     args = parser.parse_args()
     rundir = m.rundir(args)
+    params = m.params(rundir)
+
+    if args.clique_gradient:
+        assert 'cliques' in params['topology'].keys(), \
+           "Invalid --clique-gradient with {} topology".format(params['topology']['name']) +\
+           ", no 'cliques' found in topology.json."
+
+    if args.unbiased_gradient:
+        assert 'neighbourhoods' in params['topology'].keys(), \
+           "Invalid --unbiased-gradient with {} topology".format(params['topology']['name']) +\
+           ", no 'neighbourhoods' found in topology.json."
 
     algorithm = {
         'name': 'd-sgd',
