@@ -129,7 +129,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, meta['log'].upper(), None))
 
     params = {
-        'name': 'ring',
+        'name': 'grid',
         'metric': args.metric,
         'weights': args.weights 
     }
