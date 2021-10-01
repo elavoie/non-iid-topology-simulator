@@ -174,7 +174,7 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plot Convergence Speed in Epochs')
-    parser.add_argument('results', type=str, nargs='+', default=[],
+    parser.add_argument('--results', type=str, nargs='+', default=None,
                     help='experiment result')
     parser.add_argument('--save-figure', type=str, default=None,
                     help='File in which to save figure.')
@@ -210,6 +210,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
+    if args.results is None:
+        stdin = sys.stdin.readlines()
+        args.results = [ line.replace('\n','') for line in stdin ]
+
     matplotlib.rc('font', size=args.font_size)
 
     results = {}
@@ -218,41 +222,7 @@ if __name__ == "__main__":
             meta = json.load(meta_file)
         results[result] = { "meta": meta, "average": [], "minimum": [], "maximum": [] }
 
-#    props = {}
-#    for result in results:
-#        meta = results[result]["meta"]
-#        for p in meta:
-#            if p not in props:
-#                props[p] = set({})
-#            props[p] = props[p].union(set({str(meta[p])}))
-#
-#    for superfluous in ['network_interface', 'log', 'learning_rate_list', 'batch_size_list', 'results_directory', 'averaging_neighbourhood', 'cliques']:
-#        if superfluous in props:
-#            del props[superfluous]        
-#
-#    same = [ (p,list(props[p])[0]) for p in props if len(props[p]) == 1 ]
-#    different = [ (p,props[p]) for p in props if len(props[p]) > 1 ]
-#
-#    print('Identical parameters')
-#    print('--------------------')
-#    max_len_p = max([len(p) for (p,_) in same])
-#    for (p,v) in same:
-#        print(('{:' + str(max_len_p) + '} {}').format(p, v))
-#    print()
-#
-#    print('Differing parameters')
-#    print('--------------------')
-#
     experiment_names = [ os.path.split(result)[1] if result[-1] != '/' else os.path.split(result[:-1])[1] for result in results ]
-#    if len(different) > 0:
-#        max_len_p = [ max([ len(name) for name in experiment_names ]) ] + [ max([ len(i) for i in s ] + [len(p)]) for (p,s) in different ]
-#        f_str = " ".join([ "{:" + str(l) + "}" for l in max_len_p ])
-#        print(f_str.format(*tuple(['experiment'] + [ p for (p,_) in different ])))
-#        for name,result in zip(experiment_names, results):
-#            print(f_str.format(*tuple([name] + [ str(results[result]["meta"][p]) if p in results[result]['meta'] else ' ' for (p,_) in different  ])))
-#    else:
-#        print('None')
-#    print('')
 
     fig, ax = plt.subplots()
     curves = []

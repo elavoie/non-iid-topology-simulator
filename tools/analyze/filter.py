@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--inline', action='store_const', const=True, default=False, help='Print answers on a single line. (default: False)')
 
     for p in properties:
-        parser.add_argument('--' + ':'.join(p[0]), type=p[1], default=p[2], help='')
+        parser.add_argument('--' + ':'.join(p[0]), type=p[1], default=p[2], help='', nargs='+')
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log.upper(), None))
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             if arg_value is None:
                 continue
 
-            if params_value is None or params_value != arg_value:
+            if params_value is None or params_value not in  arg_value:
                 keep = False
                 break
 

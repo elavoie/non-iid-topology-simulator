@@ -15,8 +15,7 @@ if __name__ == '__main__':
             default='WARNING', help='Logging level.')
     parser.add_argument('--only', type=str, nargs='+', default=[], 
             help='Show differences only for those properties.')
-
-
+    parser.add_argument('--pass-through', action='store_const', const=True, default=False,            help='Print rundirs passed as arguments on stdout. (default: False)')
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log.upper(), None))
@@ -40,26 +39,26 @@ if __name__ == '__main__':
         else:
             different.append((name, values))
 
-    print('Identical parameters')
-    print('--------------------')
+    sys.stderr.write('Identical parameters\n')
+    sys.stderr.write('--------------------\n')
     max_len_p = max([len(p) for (p,_) in common])
     for (p,v) in common:
-        print(('{:' + str(max_len_p) + '} {}').format(p, v))
-    print()
+        sys.stderr.write(('{:' + str(max_len_p) + '} {}\n').format(p, v))
+    sys.stderr.write('\n')
 
-    print('Differing parameters')
-    print('--------------------')
     if len(different) > 0:
+        sys.stderr.write('Differing parameters\n')
+        sys.stderr.write('--------------------\n')
         max_len_p = [ max([ len(rundir) for rundir in rundirs ]) ] + [ max([ len(str(i)) for i in vs ] + [len(p)]) for (p,vs) in different ]
-        f_str = " ".join([ "{:" + str(l) + "}" for l in max_len_p ])
-        print(f_str.format(*tuple(['rundir'] + [ p for (p,_) in different ])))
+        f_str = " ".join([ "{:" + str(l) + "}" for l in max_len_p ]) + '\n'
+        sys.stderr.write(f_str.format(*tuple(['rundir'] + [ p for (p,_) in different ])))
         for rundir, i in zip(rundirs, range(len(all_params))):
-            print(f_str.format(*tuple([rundir] + [ str(v[i]) for (p,v) in different ])))
+            sys.stderr.write(f_str.format(*tuple([rundir] + [ str(v[i]) for (p,v) in different ])))
     else:
-        print('None')
-    print('')
+        if len(common) == 1:
+            sys.stderr.write('{}\n'.format(common[0]))
+    sys.stderr.write('\n')
 
-
-
-
-
+    if args.pass_through:
+        for rundir in rundirs:
+            print(rundir)
