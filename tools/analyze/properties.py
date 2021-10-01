@@ -7,8 +7,13 @@ properties = [
   (['nodes', 'nb-nodes'], int, None),
   (['topology', 'name'], str, None),
   (['topology', 'interclique-topology'], str, None),
+  (['algorithm', 'name'], str, None),
   (['algorithm', 'clique-gradient'], bool, None),
+  (['algorithm', 'initial-averaging'], bool, None),
   (['algorithm', 'unbiased-gradient'], bool, None),
+  (['algorithm', 'learning-rate'], float, None),
+  (['algorithm', 'learning-momentum'], float, None),
+  (['algorithm', 'batch-size'], int, None),
   (['model', 'name'], str, None),
 ]
 
