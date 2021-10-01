@@ -5,17 +5,7 @@ import json
 import sys
 import setup.meta as m
 import logging
-
-properties = [
-  (['meta', 'seed'], int, None),
-  (['dataset', 'name'], str, None),
-  (['nodes', 'name'], str, None),
-  (['nodes', 'nb-nodes'], int, None),
-  (['topology', 'name'], str, None),
-  (['topology', 'clique-gradient'], bool, None),
-  (['topology', 'interclique'], str, None),
-  (['model', 'name'], str, None),
-]
+import properties
 
 def get(params, path):
     obj = params
@@ -32,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('--log', type=str, choices=['ERROR', 'INFO', 'DEBUG', 'WARNING'], default='WARNING', help='Logging level.')
     parser.add_argument('--inline', action='store_const', const=True, default=False, help='Print answers on a single line. (default: False)')
 
-    for p in properties:
+    for p in properties.properties:
         parser.add_argument('--' + ':'.join(p[0]), type=p[1], default=p[2], help='', nargs='+')
 
     args = parser.parse_args()
@@ -47,10 +37,10 @@ if __name__ == '__main__':
         logging.debug('checking {}'.format(rundir))
         params = m.params(rundir)
         keep = True
-        for p in properties:
+        for p in properties.properties:
             name = ':'.join(p[0])
             arg_value = getattr(args, name.replace('-','_'))
-            params_value = get(params, p[0])
+            params_value = properties.get(params, p[0])
             logging.debug('    {} expected {} got {}'.format(name, arg_value, params_value))
 
             if arg_value is None:

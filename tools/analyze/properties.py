@@ -6,8 +6,9 @@ properties = [
   (['nodes', 'name'], str, None),
   (['nodes', 'nb-nodes'], int, None),
   (['topology', 'name'], str, None),
-  (['topology', 'clique-gradient'], bool, None),
-  (['topology', 'interclique'], str, None),
+  (['topology', 'interclique-topology'], str, None),
+  (['algorithm', 'clique-gradient'], bool, None),
+  (['algorithm', 'unbiased-gradient'], bool, None),
   (['model', 'name'], str, None),
 ]
 

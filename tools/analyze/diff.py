@@ -54,10 +54,9 @@ if __name__ == '__main__':
         sys.stderr.write(f_str.format(*tuple(['rundir'] + [ p for (p,_) in different ])))
         for rundir, i in zip(rundirs, range(len(all_params))):
             sys.stderr.write(f_str.format(*tuple([rundir] + [ str(v[i]) for (p,v) in different ])))
-    else:
-        if len(common) == 1:
-            sys.stderr.write('{}\n'.format(common[0]))
-    sys.stderr.write('\n')
+    elif not args.pass_through:
+        for rundir in rundirs:
+            sys.stderr.write(rundir + '\n')
 
     if args.pass_through:
         for rundir in rundirs:
