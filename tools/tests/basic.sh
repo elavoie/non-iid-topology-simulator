@@ -14,7 +14,8 @@ cd $SCRIPT_DIR/../
 # used by the simulator. For a list of available options for each
 # command, run 'export PYTHONPATH=.; <command> --help'.
 setup/meta.py \
-  --results-directory all \
+  --script $SCRIPT_DIR/`basename "$0"` \
+  --results-directory $SCRIPT_DIR/all \
   --log INFO |
 setup/dataset.py \
   --validation-examples-per-class 100 100 100 100 100 100 100 100 100 100 \

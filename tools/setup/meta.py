@@ -55,6 +55,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup an Experiment Run')
     parser.add_argument('--seed', type=int, default=1337, metavar='N',
         help='seed for pseudo-random number generator')
+    parser.add_argument('--script', type=str, default=None,
+        help='name of calling script (default: this executable name)')
     parser.add_argument('--log', type=str, default='WARNING', 
         choices=['NOTSET', 'INFO', 'DEBUG', 'PARTITION', 'WARNING'],
         help='log level to use (default: WARNING)')
@@ -78,7 +80,7 @@ if __name__ == "__main__":
         "seed": args.seed,
         "log": args.log,
         "results-directory": args.results_directory,
-        "script": __file__,
+        "script": __file__ if args.script is None else args.script,
         "git-hash": check_output(['git', 'rev-parse', '--short', 'HEAD'])[:-1].decode()
     }
 
