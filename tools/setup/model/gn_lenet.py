@@ -20,12 +20,13 @@ class GN_LeNet(nn.Module):
     Results for previous model described in http://proceedings.mlr.press/v119/hsieh20a.html
     """
 
-    def __init__(self, params, input_channel=3, output=10, model_input=(28,28)):
+    def __init__(self, params, input_channel=3, output=10, model_input=(24,24)):
         super(GN_LeNet, self).__init__()
 
         self.params = params
         self.input_channel = input_channel
         self.output = output
+        self.model_input = model_input
         self.classifier_input = classifier_input_calculator(*model_input)
 
         self.features = nn.Sequential(
@@ -54,7 +55,7 @@ class GN_LeNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
     def copy(self):
-        c = GN_LeNet(self.params, self.input_channel, self.output, self.classifier_input)
+        c = GN_LeNet(self.params, self.input_channel, self.output, self.model_input)
         for c1, s1 in zip(c.parameters(), self.parameters()):
             c1.mul_(0)
             c1.add_(s1)

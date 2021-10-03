@@ -104,7 +104,7 @@ def download(dataset_params):
             dataset_params['data-directory'],
             download=True)
     elif dataset_params['name'] == 'svhn':
-        data = datasets.SVNH(
+        data = datasets.SVHN(
             dataset_params['data-directory'],
             download=True)
     else:
@@ -153,7 +153,8 @@ def train(_params):
         logging.info(type(train.targets))
     elif dataset['name'] == 'svhn':
         transform = transforms.Compose([
-                transforms.ToTensor()
+                transforms.ToTensor(),
+                transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
             ])
         train = datasets.SVHN(
             dataset['data-directory'],
@@ -175,7 +176,8 @@ def test(_params):
     dataset = params(_params)
     if dataset['name'] == 'svhn':
         transform = transforms.Compose([
-                transforms.ToTensor()
+                transforms.ToTensor(),
+                transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
             ])
         test = datasets.SVHN(
             dataset['data-directory'],
