@@ -6,6 +6,7 @@ import pickle
 import copy
 import os
 import math
+import time
 from importlib import import_module
 import torch
 import torch.nn.functional as F
@@ -15,6 +16,9 @@ import setup.meta as m
 import setup.dataset as d
 import setup.model
 import statistics
+
+def now():
+    return time.strftime('%Y-%m-%d-%H:%M:%S-%Z')
 
 def model_accuracy(model, dataset, params):
     model.eval()
@@ -69,7 +73,8 @@ def log_task(tasks, params):
                     "epoch": epoch,
                     "batch": step,
                     "loss": test_loss,
-                    "accuracy": accuracy 
+                    "accuracy": accuracy,
+                    "timestamp": now()
                 }) + '\n')
         tasks.task_done()
 
@@ -150,7 +155,8 @@ class Logger:
                     "batch": state['step'],
                     "loss": total_loss/num_batches,
                     "running_loss": running_loss,
-                    "accuracy": correct / example_number 
+                    "accuracy": correct / example_number,
+                    "timestamp": now()
                 }) + '\n')
 
         self.running_loss_count = 0
@@ -192,7 +198,8 @@ class Logger:
                 },
                 "center": {
                     "norm": norm
-                }
+                },
+                "timestamp": now()
             }) + '\n')
         
     def stop(self):
