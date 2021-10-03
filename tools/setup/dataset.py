@@ -13,7 +13,6 @@ from torchvision import datasets, transforms
 numbers = {
   'mnist': {},
   'cifar10': {},
-  'voc': {},
   'svhn':{}
 }
 
@@ -73,17 +72,6 @@ numbers['cifar10']['original_test_set_number_of_examples'] = [ 1000 for _ in ran
 numbers['cifar10']['val_set_number_of_examples'] = numbers['cifar10']['original_test_set_number_of_examples']
 numbers['cifar10']['train_set_number_of_examples'] = [ 4000 for _ in range(10) ]
 
-numbers['voc']['input-size'] = 16384*3
-numbers['voc']['classes'] = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair',\
-    'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
-numbers['voc']['original_train_set_number_of_examples'] = [112, 116, 180, 81, 139, 97, 376, 163, 225, 69, 97, 203, \
-    139, 120, 1025, 133, 48, 111, 127, 128]
-numbers['voc']['original_test_set_number_of_examples'] = [205, 250, 289, 176, 240, 183, 775, 332, 545, 127, 247, 433, \
-     279, 233, 2097, 254, 98, 355, 259, 255]
-numbers['voc']['val_set_number_of_examples'] = [126, 127, 150, 100, 105, 89, 337, 174, 221, 72, 103, 218, \
-    148, 125, 983, 112, 48, 118, 134, 128]
-numbers['voc']['train_set_number_of_examples'] = numbers['voc']['original_train_set_number_of_examples']
-
 numbers['svhn']['input-size'] = 32*32*3
 numbers['svhn']['classes'] = [ i for i in range(10) ]
 numbers['svhn']['original_train_set_number_of_examples'] = [ 5000 for _ in range(10) ] 
@@ -94,7 +82,7 @@ numbers['svhn']['train_set_number_of_examples'] = [ 4000 for _ in range(10) ]
 def validate(dataset_params):
     dataset_name = dataset_params['name']
     assert dataset_params['name'] == 'mnist'  or dataset_params['name'] == 'cifar10' \
-         or dataset_params['name'] == 'svhn' or dataset_params['name'] == 'voc',\
+         or dataset_params['name'] == 'svhn',\
         'Unsupported dataset_params {}'.format(dataset_params['name'])
     assert len(dataset_params['train-examples-per-class']) == len(numbers[dataset_name]['classes']),\
                 "Expected {} train-examples-per-class numbers, got {} instead.".format(\
@@ -115,12 +103,8 @@ def download(dataset_params):
         data = datasets.CIFAR10(
             dataset_params['data-directory'],
             download=True)
-    elif dataset_params['name'] == 'voc':
-        data = datasets.VOCDetection(
-            dataset_params['data-directory'],
-            download=True)
     elif dataset_params['name'] == 'svhn':
-        data = datasets.VOCDetection(
+        data = datasets.SVNH(
             dataset_params['data-directory'],
             download=True)
     else:
@@ -177,31 +161,6 @@ def train(_params):
             download=True,
             transform=transform)
         train.targets = train.labels
-    elif dataset['name'] == 'voc':
-        transform = transforms.Compose([transforms.Resize((128,128)),transforms.ToTensor()])
-
-        def to_hot_vector(items):
-            items_set = set()
-            for im in items['annotation']['object']:
-                items_set.add(im['name'])
-
-            arr = []
-            for item in numbers['voc']['classes']:
-                if item in items_set:
-                    arr.append(1)
-                else:
-                    arr.append(0)
-
-            return arr
-
-        train = datasets.VOCDetection(
-            dataset['data-directory'],
-            year = "2007",
-            image_set="train",
-            download=True,
-            transform=transform,
-            target_transform=to_hot_vector)
-
     else:
         print('Unsupported dataset {}'.format(dataset['name']))
         sys.exit(1)
@@ -246,30 +205,6 @@ def test(_params):
             train=False,
             download=True,
             transform=transform)
-    elif dataset['name'] == 'voc':
-        transform = transforms.Compose([transforms.Resize((128,128)),transforms.ToTensor()])
-        
-        def to_hot_vector(items):
-            items_set = set()
-            for im in items['annotation']['object']:
-                items_set.add(im['name'])
-
-            arr = []
-            for item in numbers['voc']['classes']:
-                if item in items_set:
-                    arr.append(1)
-                else:
-                    arr.append(0)
-
-            return arr
-
-        test = datasets.VOCDetection(
-            dataset['data-directory'],
-            year = "2007",
-            image_set="test",
-            download=True,
-            transform=transform,
-            target_transform=to_hot_vector)
     else:
         print('Unsupported dataset {}'.format(dataset['name']))
         sys.exit(1)
