@@ -50,11 +50,14 @@ def log_task(tasks, params):
     model = import_module(params['model']['module']).create(params)
     for rank, epoch, step, model_state, event_file in iter(tasks.get, 'STOP'):
         model.load_state_dict(pickle.loads(model_state))
+        logging.info('logger.log_task logging model accuracy for node {}'.format(rank))
 
-        if params['logger']['skip-testing']:
-            sets = [('valid', valid_set)]
-        else:
-            sets = [('valid', valid_set), ('test', test_set)]
+        sets = []
+        if not params['logger']['skip-validation']:
+            sets.append(('valid', valid_set))
+
+        if not params['logger']['skip-testing']:
+            sets.append(('test', test_set))
 
         for name, dataset in sets:
             accuracy, test_loss = model_accuracy(model,dataset,params)
@@ -104,10 +107,14 @@ class Logger:
         self.running_loss_count += 1
 
     def log_train_accuracy(self, epoch, state):
+        if self.params['logger']['skip-training']:
+            return
+
         nodes = state['nodes']
         params = self.params
         for n in nodes:
             rank = n['rank']
+            logging.info('logger.log_train_accuracy node {}'.format(rank))
             model = n['model']
             model.eval()
             event_file = n['event-file']
@@ -161,6 +168,7 @@ class Logger:
         self.tasks.join()
         
     def log_consensus_distance(self, epoch, state):
+        logging.info('logger.log_consensus_distance')
         models = [ n['model'] for n in state['nodes'] ]
         center = setup.model.average(models)
         distances = [ model_distance(center, m) for m in models ]
@@ -205,8 +213,12 @@ if __name__ == "__main__":
             help='Number of parallel processes to log the accuracy of models. (default: 8)')
     parser.add_argument('--accuracy-logging-interval', type=int, default=1, metavar='N',
                         help='Log validation and test accuracy every X epochs. (default: 1)')
+    parser.add_argument('--skip-validation', action='store_const', const=True, default=False, 
+            help="Skip accuracy measurements on validation set. ( default: False)")
     parser.add_argument('--skip-testing', action='store_const', const=True, default=False, 
             help="Skip accuracy measurements on test set. ( default: False)")
+    parser.add_argument('--skip-training', action='store_const', const=True, default=False, 
+            help="Skip accuracy measurements on training set. ( default: False)")
 
     args = parser.parse_args()
     rundir = m.rundir(args)
@@ -214,7 +226,9 @@ if __name__ == "__main__":
     logger = {
         'nb-processes': args.nb_processes,
         'accuracy-logging-interval': args.accuracy_logging_interval,
-        'skip-testing': args.skip_testing
+        'skip-testing': args.skip_testing,
+        'skip-validation': args.skip_validation,
+        'skip-training': args.skip_training,
     }
     m.extend(rundir, 'logger', logger) # Add to run parameters
 

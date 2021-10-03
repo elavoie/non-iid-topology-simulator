@@ -37,7 +37,9 @@ def update_gradients(models, gradients):
     return models
 
 def gradient(nodes, topology, params):
+    logging.info('  applying gradients') 
     if not params['algorithm']['clique-gradient'] and not params['algorithm']['unbiased-gradient']:
+        logging.info('  applying own gradient') 
         for n in nodes:
             n['optimizer'].step()
     else:
@@ -46,14 +48,17 @@ def gradient(nodes, topology, params):
                 if not 'remove-clique-edges' in params['topology'].keys() \
                    or params['topology']['remove-clique-edges'] == 0:
                     for clique in topology['cliques']:
+                        logging.info('  computing gradients for clique {}'.format(clique)) 
                         models = [ nodes[rank]['model'] for rank in clique ]
                         clique_gradients = average_gradients(models)
                         update_gradients(models, clique_gradients)
+                        logging.info('  applying gradients') 
                         for rank in clique:
                             nodes[rank]['optimizer'].step()
                 else:
                     edges = topology['edges']
                     for clique in topology['cliques']:
+                        logging.info('  computing gradients for clique {} with less edges'.format(clique)) 
                         gradients = {}
                         for rank in clique:
                             # Average gradients only with other clique nodes
@@ -61,6 +66,7 @@ def gradient(nodes, topology, params):
                             models = [ nodes[r]['model'] for r in clique 
                                        if r == rank or r in edges[rank] ]
                             gradients[rank] = average_gradients(models)
+                        logging.info('  applying gradients') 
                         for rank in clique:
                             update_gradients([nodes[rank]['model']], gradients[rank])
                             nodes[rank]['optimizer'].step()
@@ -68,14 +74,17 @@ def gradient(nodes, topology, params):
                 neighbourhoods = topology['neighbourhoods']
                 for n in nodes:
                     rank = n['rank']
+                    logging.info('  computing gradients for node {} with neighbourhood {}'.format(rank, enighbourhoods[rank])) 
                     models = [ nodes[m]['model'] for m in neighbourhoods[rank]]
                     gradients = average_gradients(models)
                     update_gradients([n['model']], gradients)
+                    logging.info('  applying gradient for node {}'.format(rank)) 
                     n['optimizer'].step()
             else:
                 raise Exception('Invalid execution path, previous cases should cover all possibilities.')
 
 def average(nodes, topology, params):
+    logging.info('  computing averages of models')
     weights = topology['weights']
     edges = topology['edges']
 
@@ -85,6 +94,7 @@ def average(nodes, topology, params):
         # Compute averages
         for n in nodes:
             rank = n['rank']
+            logging.info('  computing average for node {}'.format(rank))
             models = [ n['model'] ] + [ nodes[src]['model'] for src in edges[rank] ] 
             _weights = [ weights[rank,rank] ] + [ weights[src,rank] for src in edges[rank] ]
             averaged[rank] = setup.model.average(models, _weights) 
@@ -92,6 +102,7 @@ def average(nodes, topology, params):
         # Update models
         for n in nodes:
             rank = n['rank']
+            logging.info('  updating model for node {}'.format(rank))
             update_models([n['model']],averaged[rank])
 
 def optimizer(model, params):
@@ -102,8 +113,11 @@ def optimizer(model, params):
 
 def init(nodes, topology, params):
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
+    logging.info('d-sgd.init')
+
     state = { 'nodes': nodes, 'topology': topology, 'step': 0 }
     for n in nodes:
+        logging.info('d-sgd.init: creating data sampler for node {}'.format(n['rank']))
         n['train-iterator'] = iter(torch.utils.data.DataLoader(
             n['train-set'], 
             batch_size=int(params['algorithm']['batch-size']),
@@ -119,6 +133,7 @@ def init(nodes, topology, params):
     return (state, 0, False)
 
 def next(state, params):
+    logging.info('d-sgd.next step {}'.format(state['step']))
     nodes = state['nodes']
     topology = state['topology']
 
@@ -126,12 +141,15 @@ def next(state, params):
     losses = []
     epoch_done = []
     for node in nodes:
+        logging.info('d-sgd.next computing gradient step on node {}'.format(node['rank']))
         try:
             data,target = node['train-iterator'].__next__()
             data, target = Variable(data), Variable(target)
             node['optimizer'].zero_grad()
+            logging.info('d-sgd.next node {} forward propagation'.format(node['rank']))
             output = node['model'].forward(data, params)
             loss = F.nll_loss(output, target)
+            logging.info('d-sgd.next node {} backward propagation'.format(node['rank']))
             loss.backward()
             losses.append(loss.tolist())
             epoch_done.append(False)
