@@ -7,6 +7,7 @@ properties = [
   (['nodes', 'nb-nodes'], int, None),
   (['topology', 'name'], str, None),
   (['topology', 'interclique-topology'], str, None),
+  (['topology', 'remove-clique-edges'], int, None),
   (['algorithm', 'name'], str, None),
   (['algorithm', 'clique-gradient'], bool, None),
   (['algorithm', 'initial-averaging'], bool, None),
