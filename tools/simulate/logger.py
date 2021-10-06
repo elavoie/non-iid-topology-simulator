@@ -17,9 +17,6 @@ import setup.dataset as d
 import setup.model
 import statistics
 
-def now():
-    return time.strftime('%Y-%m-%d-%H:%M:%S-%Z')
-
 def model_accuracy(model, dataset, params):
     model.eval()
     correct = 0
@@ -74,7 +71,7 @@ def log_task(tasks, params):
                     "batch": step,
                     "loss": test_loss,
                     "accuracy": accuracy,
-                    "timestamp": now()
+                    "timestamp": m.now()
                 }) + '\n')
         tasks.task_done()
 

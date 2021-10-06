@@ -86,3 +86,7 @@ if __name__ == "__main__":
 
     extend(rundir, 'meta', meta)
     print(rundir)
+
+def now():
+    return time.strftime('%Y-%m-%d-%H:%M:%S-%Z')
+
