@@ -153,7 +153,7 @@ class Logger:
                     "loss": total_loss/num_batches,
                     "running_loss": running_loss,
                     "accuracy": correct / example_number,
-                    "timestamp": now()
+                    "timestamp": m.now()
                 }) + '\n')
 
         self.running_loss_count = 0
@@ -196,7 +196,7 @@ class Logger:
                 "center": {
                     "norm": norm
                 },
-                "timestamp": now()
+                "timestamp": m.now()
             }) + '\n')
         
     def stop(self):
