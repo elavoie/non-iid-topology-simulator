@@ -37,27 +37,8 @@ def skew_convergence(rundir):
                 skews = event
     return skews
 
-def avg_final_skew(rundir):
-    sc = skew_convergence(rundir)
-    if sc is None:
-        nodes = ns.load(rundir)
-        cliques = topology.load(rundir)['cliques']
-        global_dist = dc_metrics.dist(nodes)
-        skews = [ dc_metrics.skew(global_dist, dc_metrics.dist([ nodes[r] for r in c ])) for c in cliques ]
-        return sum(skews)/len(skews), 0.0
-    else:
-        convergence = sc['convergence']
-        max_step = 0
-        final = None
-        for k in convergence.keys():
-            step = int(k)
-            if step > max_step:
-                final = convergence[k]
-        assert final is not None, "Final skews not found"
-        return final['avg'], sc['duration']
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show the distribution of final skews of many experiments.')
+    parser = argparse.ArgumentParser(description='Show the convergence speed of skew over many experiments.')
     parser.add_argument('--rundirs', type=str, nargs='+', default=None,
             help='experiment rundirs')
     parser.add_argument('--log', type=str, choices=['ERROR', 'INFO', 'DEBUG', 'WARNING'], 
@@ -76,10 +57,10 @@ if __name__ == '__main__':
                     help='Minimum value on the x axis.')
     parser.add_argument('--xmax', type=float, default=0.75,
                     help='Maximum value on the x axis.')
-    parser.add_argument('--nb-bins', type=int, default=100,
-                    help='Number of bins of histogram.')
     parser.add_argument('--linewidth', type=float, default=1.5,
                     help='Line width of plot lines.')
+    parser.add_argument('--max-steps', type=int, default=1000,
+                    help='Maximum number of steps to use on X axis.')
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log.upper(), None))
@@ -91,47 +72,80 @@ if __name__ == '__main__':
         rundirs = args.rundirs
 
     seeds = {}
-    avg_skews = {}
-    durations = {}
+    convergences = {}
     for rundir in rundirs:
         params = m.params(rundir)
-        h = hash(params)
 
-        if h not in avg_skews.keys():
-            seeds[h] = set({})
-            avg_skews[h] = []
-            durations[h] = []
-        
+        h = hash(params)
         s = m.params(rundir, 'meta')['seed']
-        assert s not in seeds[h], "Seed {} already seen previousl for {}".format(s, h)
+        if h not in seeds.keys():
+            seeds[h] = set()
+            convergences[h] = {}
+        assert s not in seeds[h], "Seed {} already seen previously for {}".format(s, h)
         seeds[h].add(s)
-        avg, t = avg_final_skew(rundir)
-        avg_skews[h].append(avg)
-        durations[h].append(t)
+        convergences[h][rundir] = skew_convergence(rundir)
 
     if len(args.labels) == 0:
-        labels = [ 'undefined' for _ in avg_skews.keys() ]
-    elif len(args.labels) < len(avg_skews.keys()):
+        labels = [ 'undefined' for _ in convergences.keys() ]
+    elif len(args.labels) < len(convergences.keys()):
         print('Insufficient number of labels')
         sys.exit(1)
     else:
         labels = args.labels
 
     if len(args.linestyles) == 0:
-        linestyles = [ '-' for _ in avg_skews.keys() ]
-    elif len(args.linestyles) < len(avg_skews.keys()):
+        linestyles = [ '-' for _ in convergences.keys() ]
+    elif len(args.linestyles) < len(convergences.keys()):
         print('Insufficient number of linestyles')
         sys.exit(1)
     else:
         linestyles = args.linestyles
 
+    fig, ax = plt.subplots()
+    ax.set_ylabel('Skew', fontsize=args.font_size)
+    ax.set_xlabel('Steps', fontsize=args.font_size)
+    ax.tick_params(labelsize=args.font_size)
 
-    for h,l,ls in zip(avg_skews.keys(), labels, linestyles):
+    for h,lb,ls in zip(convergences, labels, linestyles):
+        logging.info('creating curves for {}'.format(h))
+        last = {
+            rundir: {
+                "min": 0,
+                "max": 0,
+                "avg": 0
+            } for rundir in convergences[h]
+        }
+        minuses = []
+        maxes = []
+        avgs = []
+        for k_int in range(args.max_steps):
+            k = str(k_int)
+            logging.info('computing stats for step {}'.format(k))
+            k_minuses = []
+            k_maxes = []
+            k_avgs = []
+            for rundir in convergences[h]:
+                logging.info('generating data for {}'.format(rundir))
+                c = convergences[h][rundir]['convergence']
+                if k in c.keys():
+                    k_minuses.append(c[k]['min'])
+                    k_maxes.append(c[k]['max'])
+                    k_avgs.append(c[k]['avg'])
+                    last[rundir]['min'] = c[k]['min']
+                    last[rundir]['max'] = c[k]['max']
+                    last[rundir]['avg'] = c[k]['avg']
+                else:
+                    k_minuses.append(last[rundir]['min'])
+                    k_maxes.append(last[rundir]['max'])
+                    k_avgs.append(last[rundir]['avg'])
+            minuses.append(min(k_minuses))
+            maxes.append(max(k_maxes))
+            avgs.append(sum(k_avgs) / len(k_avgs))
+
         print(h)
-        print('avg duration: {}'.format(sum(durations[h])/len(durations[h])))
-        print('final avg skew: {}'.format(sum(avg_skews[h])/len(avg_skews[h])))
-        print()
-        plt.hist(avg_skews[h], bins=np.linspace(args.xmin,args.xmax,args.nb_bins), histtype='step', label=l, linestyle=ls, linewidth=args.linewidth)
+        avg=plt.plot(range(args.max_steps), avgs, label=lb, linestyle=ls, linewidth=args.linewidth)
+        plt.plot(range(args.max_steps), minuses, linestyle=ls, linewidth=args.linewidth/2., color=avg[0].get_color())
+        plt.plot(range(args.max_steps), maxes, linestyle=ls, linewidth=args.linewidth/2., color=avg[0].get_color())
 
     matplotlib.rc('font', size=args.font_size)
     plt.legend()
