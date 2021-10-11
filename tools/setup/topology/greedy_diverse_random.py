@@ -113,7 +113,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, meta['log'].upper(), None))
 
     topology_params = {
-        'name': 'random-graph',
+        'name': 'greedy-diverse-random',
         'nb-neighbours': args.nb_neighbours,
         'weights': args.weights 
     }
