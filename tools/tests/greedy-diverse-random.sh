@@ -29,6 +29,7 @@ setup/topology/greedy_diverse_random.py \
   --nb-neighbours 10 |
 setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
+  --unbiased-gradient \
   --batch-size 125 |
 simulate/logger.py \
   --accuracy-logging-interval 1\
