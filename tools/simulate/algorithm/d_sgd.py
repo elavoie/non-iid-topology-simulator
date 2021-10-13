@@ -128,7 +128,7 @@ def init(nodes, topology, params):
 
     if params['algorithm']['initial-averaging']:
         logging.info('d_sgd: averaging initial models')
-        avg_model = average_models([ nodes[rank]['model'] for rank in range(len(nodes)) ])
+        avg_model = setup.model.average([ nodes[rank]['model'] for rank in range(len(nodes)) ])
         for rank in range(len(nodes)):
             update_models([nodes[rank]['model']], avg_model)
 
