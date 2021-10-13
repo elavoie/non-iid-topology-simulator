@@ -348,5 +348,4 @@ if __name__ == "__main__":
 
     if args.save_figure is not None:
         plt.savefig(args.save_figure, transparent=True, bbox_inches='tight')
-    
     plt.show()
