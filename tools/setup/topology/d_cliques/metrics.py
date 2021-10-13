@@ -1,6 +1,6 @@
 def skew(d1, d2):
     def valid(d):
-        return all(map(lambda x: x >= 0 and x <= 1, d1)) and\
+        return all(map(lambda x: x >= 0 and x <= 1, d)) and\
                sum(d) >= 0.999999 and\
                sum(d) <= 1.000001
 
