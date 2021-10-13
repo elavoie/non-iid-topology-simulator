@@ -95,7 +95,8 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             ydata, 
             label='{}'.format(name),
             marker=marker,
-            linestyle=linestyle
+            linestyle=linestyle,
+            linewidth=args.linewidth
         )
         curves.append(curve)
 
@@ -106,7 +107,7 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             [ acc*100. for acc in conv['min'] ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle=linestyle
         )
     elif args.add_min_max and conv != None:
@@ -114,7 +115,7 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             conv['min'],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle=linestyle
         )
 
@@ -124,7 +125,7 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             [ acc*100. for acc in conv['max'] ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle=linestyle
         )
     elif args.add_min_max and conv != None:
@@ -132,7 +133,7 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             conv['max'],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle=linestyle
         )
 
@@ -142,14 +143,14 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             [ (avg+std)*100. for avg,std in zip(conv['avg'], conv['std']) ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle='--'
         )
         bottom = ax.plot(
             xdata,
             [ (avg-std)*100. for avg,std in zip(conv['avg'], conv['std']) ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle='--'
         )
     elif args.add_std and conv != None:
@@ -157,14 +158,14 @@ def get_curves(name, xdata, ydata, conv, marker='', linestyle='-'):
             xdata,
             [ (avg+std)*100. for avg,std in zip(conv['avg'], conv['std']) ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle='--'
         )
         bottom = ax.plot(
             xdata,
             [ (avg-std)*100. for avg,std in zip(conv['avg'], conv['std']) ],
             color=curve[0].get_color(),
-            linewidth=0.5,
+            linewidth=0.5*args.linewidth,
             linestyle='--'
         )
     return curves
@@ -204,6 +205,8 @@ if __name__ == "__main__":
                     help='Markers used for each curve')
     parser.add_argument('--linestyles', type=str, nargs='+', default=[],
                     help='Linestyles used for each curve')
+    parser.add_argument('--linewidth', type=float, default=1.5,
+                    help='Line width of plot lines.')
 
     args = parser.parse_args()
     print(args)

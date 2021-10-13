@@ -84,3 +84,37 @@ if __name__ == '__main__':
             print()
             print()
 
+        if 'neighbourhoods' in topology.keys():
+            print("neighbourhoods")
+            if 'nb-neighbours' in topology_params:
+                print("    nb-neighbours: {}".format(topology_params['nb-neighbours']))
+
+            neighbourhoods = topology['neighbourhoods']
+            min_neighbourhood_size = min([ len(neighbourhoods[n]) for n in neighbourhoods.keys() ])
+            max_neighbourhood_size = max([ len(neighbourhoods[n]) for n in neighbourhoods.keys() ])
+            print("    nb: {}".format(len(neighbourhoods)))
+            print("    min: {}".format(min_neighbourhood_size))
+            print("    max: {}".format(max_neighbourhood_size))
+            print("    avg: {}".format(sum([ len(neighbourhoods[n]) for n in neighbourhoods.keys() ])/len(neighbourhoods)))
+
+            distribution = {}
+            for s in range(min_neighbourhood_size, max_neighbourhood_size+1):
+                nb = sum(map(lambda ns: 1 if len(ns) == s else 0, neighbourhoods.values()))
+                if nb > 0:
+                    distribution[s] = nb
+
+            print('    distribution:') 
+            print('        (nb nodes): (nb neighbours)')
+            for s in distribution.keys():
+                print('        {}: {}'.format(s, distribution[s]))
+
+            print('    skew (compared to global distribution):') 
+            nodes = ns.load(result)
+            global_dist = dc_metrics.dist(nodes)
+            skews = [ (dc_metrics.skew(global_dist, dc_metrics.dist([ nodes[r] for r in ns ])), len(ns)) for ns in neighbourhoods.values() ]
+            print("        min: {}".format(min([ s[0] for s in skews ])))
+            print("        max: {}".format(max([ s[0] for s in skews ])))
+            print("        avg: {}".format(sum([ s[0] for s in skews ])/len(skews)))
+
+            print()
+            print()

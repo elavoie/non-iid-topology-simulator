@@ -17,9 +17,6 @@ import setup.dataset as d
 import setup.model
 import statistics
 
-def now():
-    return time.strftime('%Y-%m-%d-%H:%M:%S-%Z')
-
 def model_accuracy(model, dataset, params):
     model.eval()
     correct = 0
@@ -74,7 +71,7 @@ def log_task(tasks, params):
                     "batch": step,
                     "loss": test_loss,
                     "accuracy": accuracy,
-                    "timestamp": now()
+                    "timestamp": m.now()
                 }) + '\n')
         tasks.task_done()
 
@@ -156,7 +153,7 @@ class Logger:
                     "loss": total_loss/num_batches,
                     "running_loss": running_loss,
                     "accuracy": correct / example_number,
-                    "timestamp": now()
+                    "timestamp": m.now()
                 }) + '\n')
 
         self.running_loss_count = 0
@@ -199,7 +196,7 @@ class Logger:
                 "center": {
                     "norm": norm
                 },
-                "timestamp": now()
+                "timestamp": m.now()
             }) + '\n')
         
     def stop(self):

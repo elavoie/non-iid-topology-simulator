@@ -72,13 +72,15 @@ def gradient(nodes, topology, params):
                             nodes[rank]['optimizer'].step()
             elif params['algorithm']['unbiased-gradient']:
                 neighbourhoods = topology['neighbourhoods']
+                gradients = {}
                 for n in nodes:
                     rank = n['rank']
-                    logging.info('  computing gradients for node {} with neighbourhood {}'.format(rank, enighbourhoods[rank])) 
+                    logging.info('  computing gradients for node {} with neighbourhood {}'.format(rank, neighbourhoods[rank])) 
                     models = [ nodes[m]['model'] for m in neighbourhoods[rank]]
-                    gradients = average_gradients(models)
-                    update_gradients([n['model']], gradients)
+                    gradients[rank] = average_gradients(models)
+                for n in nodes:
                     logging.info('  applying gradient for node {}'.format(rank)) 
+                    update_gradients([n['model']], gradients[n['rank']])
                     n['optimizer'].step()
             else:
                 raise Exception('Invalid execution path, previous cases should cover all possibilities.')
@@ -126,7 +128,7 @@ def init(nodes, topology, params):
 
     if params['algorithm']['initial-averaging']:
         logging.info('d_sgd: averaging initial models')
-        avg_model = average_models([ nodes[rank]['model'] for rank in range(len(nodes)) ])
+        avg_model = setup.model.average([ nodes[rank]['model'] for rank in range(len(nodes)) ])
         for rank in range(len(nodes)):
             update_models([nodes[rank]['model']], avg_model)
 

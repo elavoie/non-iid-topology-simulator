@@ -46,7 +46,7 @@ if __name__ == '__main__':
             if arg_value is None:
                 continue
 
-            if params_value is None or params_value not in  arg_value:
+            if params_value not in  arg_value:
                 keep = False
                 break
 
