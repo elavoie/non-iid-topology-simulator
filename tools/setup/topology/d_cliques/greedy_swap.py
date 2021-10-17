@@ -6,6 +6,7 @@ import logging
 import functools
 import json
 import math
+import time
 from random import Random
 from copy import deepcopy
 import setup.meta as m
@@ -29,10 +30,11 @@ def cliques(nodes, params):
         cliques.append(set(c))
     cliques.append(set(ranks))
 
+    start_time = time.perf_counter()
     global_dist = metrics.dist(nodes)
-
     rand = Random()
     rand.seed(params['meta']['seed'])
+    skew_convergence = {}
     for k in range(params['topology']['max-steps']):
         c1,c2 = rand.sample(cliques, 2)
         c1_skew = metric(metrics.dist([ nodes[r] for r in c1 ]), global_dist)
@@ -57,9 +59,21 @@ def cliques(nodes, params):
 
             # stats
             skews = [ metric(metrics.dist([ nodes[r] for r in c]), global_dist) for c in cliques ]
+            skew_convergence[k] = { 
+                "min": min(skews), 
+                "max": max(skews), 
+                "avg": sum(skews)/len(skews)
+            }
             last = k
+    end_time = time.perf_counter()
 
-    logging.info('last step {:3d} skew min {:.3f} max {:.3f} avg {:.3f}'.format(last, min(skews), max(skews), sum(skews)/len(skews)))
+
+    logging.info('last step {:3d} skew min {:.3f} max {:.3f} avg {:.3f}'.format(
+        last, 
+        skew_convergence[last]["min"], 
+        skew_convergence[last]["max"], 
+        skew_convergence[last]["avg"]
+    ))
 
     edges = {}
     for c in cliques:
@@ -67,7 +81,12 @@ def cliques(nodes, params):
         for rank in ranks:
             edges[rank] = ranks.difference([rank])
 
-    return [ list(c) for c in cliques ], edges
+    log_skew = {
+        "duration": end_time - start_time,
+        "convergence": skew_convergence
+    }
+
+    return [ list(c) for c in cliques ], edges, log_skew
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate a D-Cliques Topology with initial Random Cliques then Greedy Swaps.')
@@ -116,7 +135,7 @@ if __name__ == "__main__":
     m.extend(rundir, 'topology', topology_params)
     params = m.params(rundir) # reload extended
 
-    cliques, intra_edges  = cliques(nodes, params)
+    cliques, intra_edges, log_skew  = cliques(nodes, params)
     edges = interclique.get(args.interclique)(cliques, intra_edges, params)
     if topology_params['remove-clique-edges'] > 0: 
         edges, cliques = utils.remove_clique_edges(edges, cliques, params)
@@ -128,5 +147,15 @@ if __name__ == "__main__":
     }
     with open(os.path.join(rundir, 'topology.json'), 'w+') as topology_file:
         json.dump(topology, topology_file)
+
+    with open(os.path.join(rundir, 'events', 'global.jsonlines'), 'a') as events:
+        events.write(json.dumps({
+            "type": "skew-convergence",
+            "duration": log_skew["duration"],
+            "convergence": log_skew["convergence"],
+            "timestamp": m.now()
+        }) + '\n')
+
+
 
     print(rundir)
