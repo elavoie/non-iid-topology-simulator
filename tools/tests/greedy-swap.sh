@@ -22,17 +22,17 @@ setup/dataset.py \
   --train-examples-per-class 4000 4000 4000 4000 4000 4000 4000 4000 4000 4000 \
   --name mnist |
 setup/nodes/google-fl.py \
-  --nb-nodes 10 \
+  --nb-nodes 100 \
   --local-shards 2 \
-  --shard-size 2000 |
-setup/topology/greedy_neighbourhood_swap.py \
-  --metric skew \
-  --nb-neighbours 4|
+  --shard-size 200 |
+setup/topology/d_cliques/greedy_swap.py \
+  --metric hellinger \
+  --max-clique-size 10|
 setup/model/gn_lenet.py |
 simulate/algorithm/d_sgd.py \
   --batch-size 125 |
 simulate/logger.py \
   --accuracy-logging-interval 1\
-  --nb-processes 2 |
+  --nb-processes 8 |
 simulate/run.py \
-  --nb-epochs 25
+  --nb-epochs 10
