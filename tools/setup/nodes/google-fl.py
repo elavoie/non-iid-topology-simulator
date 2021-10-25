@@ -137,6 +137,11 @@ if __name__ == "__main__":
         'Total number of shards ({}) does not split evenly in {} nodes'.format(\
         nb_shards, args.nb_nodes)
 
+    # Make sure the dataset splits in the total number of shards requested
+    assert sum(examples_per_class) == args.nb_nodes * args.local_shards * args.shard_size,\
+        'Invalid combination of nb-nodes, local-shards, and shard-size, ' +\
+        'nb-nodes * local-shards * shard-size should be equal to sum(train-examples-per-class)'
+
     node_params = {
         'name': args.name,
         'nb-nodes': args.nb_nodes,
