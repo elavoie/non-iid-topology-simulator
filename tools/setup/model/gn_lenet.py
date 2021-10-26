@@ -77,6 +77,17 @@ def classifier_input_calculator(y,z):
     """
 
     def down(x,y,z):
+        """Computes the final shape of a 3D tensor of shape (x,y,z) after the Conv2d and
+        Maxpool layers in the gn_lenet model.
+
+        Args:
+            x (Int): 1st dimension of the input tensor
+            y (Int): 2nd dimension
+            z (Int): 3rd dimension
+
+        Returns:
+            (Int, Int, Int): Shape of the output of the Conv2d + Maxpool Layer.
+        """
         return x,floor((y-3)/2)+1,floor((z-3)/2)+1
 
     x,y,z = down(32,y,z)
