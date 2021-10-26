@@ -104,25 +104,16 @@ if __name__ == "__main__":
         help='Maximum number of steps to consider after initial random clique generation (default: 1000).')
     parser.add_argument('--remove-clique-edges', type=int, default=0, metavar='N', 
             help="Remove X random edges from each clique. ( default: 0)")
-    parser.add_argument('--metric', type=str, default='skew',
-      help='Metric to use to compare distributions in greedy swap. (default: skew)', \
-           choices=['skew', 'relative_entropy', 'symmetric_relative_entropy', 'hellinger', 'euclidean'])
+    parser.add_argument('--metric', type=str, default='total_variation_distance',
+      help='Metric to use to compare distributions in greedy swap. (default: total_variation_distance)', \
+           choices=['total_variation_distance', 'relative_entropy', 'symmetric_relative_entropy', 'hellinger', 'euclidean', 'chebyshev'])
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
     nodes = m.load(rundir, 'nodes.json')
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
 
-    if args.metric == 'skew':
-        metric = metrics.skew
-    elif args.metric == 'relative_entropy':
-        metric = metrics.relative_entropy
-    elif args.metric == 'symmetric_relative_entropy':
-        metric = metrics.symmetric_relative_entropy
-    elif args.metric == 'hellinger':
-        metric = metrics.hellinger
-    elif args.metric == 'euclidean':
-        metric = metrics.euclidean
+    metric = metrics.get_metric(args.metric)
 
     topology_params = {
         'name': 'd-cliques/greedy-swap',

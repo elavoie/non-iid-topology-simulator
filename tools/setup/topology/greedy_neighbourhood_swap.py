@@ -83,9 +83,9 @@ if __name__ == "__main__":
       help="Algorithm used to compute weights (default: 'metropolis-hasting').")
     parser.add_argument('--nb-neighbours', type=int, default=10,
       help='Number of neighbours for each node. (default: 10)')
-    parser.add_argument('--metric', type=str, default='skew',
-      help='Metric to use to compare distributions in greedy swap. (default: skew)', \
-           choices=['skew', 'relative_entropy', 'symmetric_relative_entropy', 'hellinger', 'euclidean'])
+    parser.add_argument('--metric', type=str, default='total_variation_distance',
+      help='Metric to use to compare distributions in greedy swap. (default: total_variation_distance)', \
+           choices=['total_variation_distance', 'relative_entropy', 'symmetric_relative_entropy', 'hellinger', 'euclidean'])
     parser.add_argument('--nb-passes', type=int, default=None,
       help='Number of passes over the node set used to find ' + 
            'candidates for swapping. (default: same as --nb-neighbours)')
@@ -98,16 +98,7 @@ if __name__ == "__main__":
     if args.nb_passes is None:
         args.nb_passes = args.nb_neighbours
 
-    if args.metric == 'skew':
-        metric = metrics.skew
-    elif args.metric == 'relative_entropy':
-        metric = metrics.relative_entropy
-    elif args.metric == 'symmetric_relative_entropy':
-        metric = metrics.symmetric_relative_entropy
-    elif args.metric == 'hellinger':
-        metric = metrics.hellinger
-    elif args.metric == 'euclidean':
-        metric = metrics.euclidean
+    metric = metrics.get_metric(args.metric)
 
     topology_params = {
         'name': 'greedy-neighbourhood-swap',

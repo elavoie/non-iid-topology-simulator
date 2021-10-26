@@ -39,6 +39,11 @@ def symmetric_relative_entropy(d1, d2):
 
     return sum([ 0.5*x*log(x/y)+0.5*y*log(y/x) for x,y in zip(d1,d2) ])
 
+def chebyshev(d1, d2):
+    is_density(d1,d2)
+
+    return max([ x-y for x,y in zip(d1,d2) ])
+
 def hellinger(d1, d2):
     is_density(d1,d2)
 
@@ -59,3 +64,17 @@ def dist(nodes):
     total = sum(nbs)
     return [ float(x)/total for x in nbs ]
 
+def get_metric(metric_name):
+
+    if metric_name == 'total_variation_distance':
+        return skew
+    elif metric_name == 'relative_entropy':
+        return relative_entropy
+    elif metric_name == 'symmetric_relative_entropy':
+        return symmetric_relative_entropy
+    elif metric_name == 'hellinger':
+        return hellinger
+    elif metric_name == 'euclidean':
+        return euclidean
+    elif metric_name == 'chebyshev':
+        return chebyshev

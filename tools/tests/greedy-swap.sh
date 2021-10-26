@@ -15,7 +15,7 @@ cd $SCRIPT_DIR/../
 # command, run 'export PYTHONPATH=.; <command> --help'.
 setup/meta.py \
   --script $SCRIPT_DIR/`basename "$0"` \
-  --results-directory $SCRIPT_DIR/all \
+  --results-directory $SCRIPT_DIR/ \
   --log INFO |
 setup/dataset.py \
   --validation-examples-per-class 100 100 100 100 100 100 100 100 100 100 \
@@ -26,13 +26,13 @@ setup/nodes/google-fl.py \
   --local-shards 2 \
   --shard-size 200 |
 setup/topology/d_cliques/greedy_swap.py \
-  --metric hellinger \
+  --metric euclidean \
   --max-clique-size 10|
-setup/model/gn_lenet.py |
+setup/model/linear.py |
 simulate/algorithm/d_sgd.py \
-  --batch-size 125 |
+  --batch-size 128 |
 simulate/logger.py \
-  --accuracy-logging-interval 1\
+  --accuracy-logging-interval 10\
   --nb-processes 8 |
 simulate/run.py \
-  --nb-epochs 10
+  --nb-epochs 100
