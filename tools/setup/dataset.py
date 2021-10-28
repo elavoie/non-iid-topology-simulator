@@ -154,6 +154,7 @@ def train(_params):
     elif dataset['name'] == 'svhn':
         transform = transforms.Compose([
                 transforms.ToTensor(),
+                # Normalization values taken from this project: https://github.com/ucbdrive/skipnet/blob/master/cifar/data.py
                 transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
             ])
         train = datasets.SVHN(
@@ -177,6 +178,7 @@ def test(_params):
     if dataset['name'] == 'svhn':
         transform = transforms.Compose([
                 transforms.ToTensor(),
+                # Normalization values taken from this project: https://github.com/ucbdrive/skipnet/blob/master/cifar/data.py
                 transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
             ])
         test = datasets.SVHN(
