@@ -12,7 +12,8 @@ from torchvision import datasets, transforms
 
 numbers = {
   'mnist': {},
-  'cifar10': {}
+  'cifar10': {},
+  'svhn':{}
 }
 
 numbers['mnist']['input-size'] = 784
@@ -71,9 +72,17 @@ numbers['cifar10']['original_test_set_number_of_examples'] = [ 1000 for _ in ran
 numbers['cifar10']['val_set_number_of_examples'] = numbers['cifar10']['original_test_set_number_of_examples']
 numbers['cifar10']['train_set_number_of_examples'] = [ 4000 for _ in range(10) ]
 
+numbers['svhn']['input-size'] = 32*32*3
+numbers['svhn']['classes'] = [ i for i in range(10) ]
+numbers['svhn']['original_train_set_number_of_examples'] = [ 5000 for _ in range(10) ] 
+numbers['svhn']['original_test_set_number_of_examples'] = [ 1000 for _ in range(10) ]
+numbers['svhn']['val_set_number_of_examples'] = numbers['svhn']['original_test_set_number_of_examples']
+numbers['svhn']['train_set_number_of_examples'] = [ 4000 for _ in range(10) ]
+
 def validate(dataset_params):
     dataset_name = dataset_params['name']
-    assert dataset_params['name'] == 'mnist' or dataset_params['name'] == 'cifar10',\
+    assert dataset_params['name'] == 'mnist'  or dataset_params['name'] == 'cifar10' \
+         or dataset_params['name'] == 'svhn',\
         'Unsupported dataset_params {}'.format(dataset_params['name'])
     assert len(dataset_params['train-examples-per-class']) == len(numbers[dataset_name]['classes']),\
                 "Expected {} train-examples-per-class numbers, got {} instead.".format(\
@@ -92,6 +101,10 @@ def download(dataset_params):
             download=True)
     elif dataset_params['name'] == 'cifar10':
         data = datasets.CIFAR10(
+            dataset_params['data-directory'],
+            download=True)
+    elif dataset_params['name'] == 'svhn':
+        data = datasets.SVHN(
             dataset_params['data-directory'],
             download=True)
     else:
@@ -138,6 +151,17 @@ def train(_params):
         logging.info(train)
         logging.info(len(train.targets))
         logging.info(type(train.targets))
+    elif dataset['name'] == 'svhn':
+        transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
+            ])
+        train = datasets.SVHN(
+            dataset['data-directory'],
+            split="train",
+            download=True,
+            transform=transform)
+        train.targets = train.labels
     else:
         print('Unsupported dataset {}'.format(dataset['name']))
         sys.exit(1)
@@ -150,7 +174,18 @@ def valid(_params):
 
 def test(_params):
     dataset = params(_params)
-    if dataset['name'] == 'mnist':
+    if dataset['name'] == 'svhn':
+        transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.4377, 0.4438, 0.4728), (0.1980, 0.2010, 0.1970))
+            ])
+        test = datasets.SVHN(
+            dataset['data-directory'],
+            split="test",
+            download=True,
+            transform=transform)
+        test.targets = test.labels
+    elif dataset['name'] == 'mnist':
         transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307, ), (0.3081, ))
@@ -327,7 +362,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Provide Training and Test Data Options.')
     parser.add_argument('--rundir', type=str, default=None,
             help='Directory of the run in which to save the dataset options.')
-    parser.add_argument('--name', type=str, default='mnist', choices=['mnist', 'cifar10'],
+    parser.add_argument('--name', type=str, default='mnist', choices=['mnist', 'cifar10', 'svhn'],
             help='Name of dataset for training and test. (default: mnist)')
     parser.add_argument('--train-examples-per-class', type=int, default=None, nargs='+',
             help="Number of examples to use for training for each class. " +\

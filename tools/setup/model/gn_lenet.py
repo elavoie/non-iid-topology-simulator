@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import setup.meta as m
 import setup.dataset as ds
+from math import floor
 
 class GN_LeNet(nn.Module):
     """
@@ -19,13 +20,14 @@ class GN_LeNet(nn.Module):
     Results for previous model described in http://proceedings.mlr.press/v119/hsieh20a.html
     """
 
-    def __init__(self, params, input_channel=3, output=10, classifier_input=576):
+    def __init__(self, params, input_channel=3, output=10, model_input=(24,24)):
         super(GN_LeNet, self).__init__()
 
         self.params = params
         self.input_channel = input_channel
         self.output = output
-        self.classifier_input = classifier_input
+        self.model_input = model_input
+        self.classifier_input = classifier_input_calculator(*model_input)
 
         self.features = nn.Sequential(
             nn.Conv2d(input_channel, 32, kernel_size=5, stride=1, padding=2),
@@ -43,7 +45,7 @@ class GN_LeNet(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(classifier_input, output),
+            nn.Linear(self.classifier_input, output),
         )
 
     def forward(self, x, params):
@@ -53,24 +55,53 @@ class GN_LeNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
     def copy(self):
-        c = GN_LeNet(self.params, self.input_channel, self.output, self.classifier_input)
+        c = GN_LeNet(self.params, self.input_channel, self.output, self.model_input)
         for c1, s1 in zip(c.parameters(), self.parameters()):
             c1.mul_(0)
             c1.add_(s1)
         return c
 
+def classifier_input_calculator(y,z):
+    """Given the input shape of GN_Lenet, returns the size of the output of the Sequential module.
+    This function is helpful to compute the size of the input of the classifier.
+    Args:
+        - y : the size of the first dimension of a channel in an input data
+        - z : the size of the second dimension of a channel in an input data
+    Output:
+        - The size of the output of the sequential module of the GN_Lenet
+    
+    Example:
+        Given an image from MNIST, since the images have shape (1,24,24), the size of a single
+        channel is (24,24). classifier_input_calculator(24,24) == 256 and 256 is indeed the
+        required input for the classifier.
+    """
+
+    def down(x,y,z):
+        return x,floor((y-3)/2)+1,floor((z-3)/2)+1
+
+    x,y,z = down(32,y,z)
+    x,y,z = down(x,y,z)
+    x,y,z = down(2*x,y,z)
+
+    return x*y*z
+
+
 def create(params):
     if params['dataset']['name'] == 'mnist':
         input_channel = 1
         output = 10
-        classifier_input = 256
+        model_input = (24,24)
     elif params['dataset']['name'] == 'cifar10':
         input_channel = 3
         output = 10
-        classifier_input = 576
+        model_input = (32,32)
+    elif params['dataset']['name'] == 'svhn':
+        input_channel = 3
+        output = 10
+        model_input = (32,32)
     else:
         raise Exception("Invalid dataset: {}".format(args.dataset))
-    return GN_LeNet(params, input_channel, output, classifier_input)
+    return GN_LeNet(params, input_channel, output, model_input)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Provide Group-Normalized LeNet Model Options.')

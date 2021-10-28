@@ -37,15 +37,15 @@ def cliques(nodes, params):
     skew_convergence = {}
     for k in range(params['topology']['max-steps']):
         c1,c2 = rand.sample(cliques, 2)
-        c1_skew = metrics.skew(metrics.dist([ nodes[r] for r in c1 ]), global_dist)
-        c2_skew = metrics.skew(metrics.dist([ nodes[r] for r in c2 ]), global_dist)
+        c1_skew = metric(metrics.dist([ nodes[r] for r in c1 ]), global_dist)
+        c2_skew = metric(metrics.dist([ nodes[r] for r in c2 ]), global_dist)
         baseline = c1_skew + c2_skew
 
         def updated(n1,c1,n2,c2):
             c1_updated = c1.difference([n1]).union([n2])
             c2_updated = c2.difference([n2]).union([n1])
-            c1_updated_skew = metrics.skew(metrics.dist([ nodes[r] for r in c1_updated ]), global_dist)
-            c2_updated_skew = metrics.skew(metrics.dist([ nodes[r] for r in c2_updated ]), global_dist)
+            c1_updated_skew = metric(metrics.dist([ nodes[r] for r in c1_updated ]), global_dist)
+            c2_updated_skew = metric(metrics.dist([ nodes[r] for r in c2_updated ]), global_dist)
             return c1_updated_skew + c2_updated_skew
 
         pairs = [ (n1,n2,updated(n1,c1,n2,c2)-baseline) for n1 in c1 for n2 in c2 ]
@@ -58,7 +58,7 @@ def cliques(nodes, params):
             c2.add(p[0])
 
             # stats
-            skews = [ metrics.skew(metrics.dist([ nodes[r] for r in c]), global_dist) for c in cliques ]
+            skews = [ metric(metrics.dist([ nodes[r] for r in c]), global_dist) for c in cliques ]
             skew_convergence[k] = { 
                 "min": min(skews), 
                 "max": max(skews), 
@@ -104,11 +104,16 @@ if __name__ == "__main__":
         help='Maximum number of steps to consider after initial random clique generation (default: 1000).')
     parser.add_argument('--remove-clique-edges', type=int, default=0, metavar='N', 
             help="Remove X random edges from each clique. ( default: 0)")
+    parser.add_argument('--metric', type=str, default='total_variation_distance',
+      help='Metric to use to compare distributions in greedy swap. (default: total_variation_distance)', \
+           choices=['total_variation_distance', 'relative_entropy', 'symmetric_relative_entropy', 'hellinger', 'euclidean', 'chebyshev'])
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
     nodes = m.load(rundir, 'nodes.json')
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
+
+    metric = metrics.get_metric(args.metric)
 
     topology_params = {
         'name': 'd-cliques/greedy-swap',
