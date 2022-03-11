@@ -3,3 +3,4 @@ examples/all/
 **/__pycache__/
 *.swp
 .idea/
+*.pyc
