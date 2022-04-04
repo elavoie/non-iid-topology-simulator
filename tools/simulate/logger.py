@@ -92,12 +92,11 @@ class Logger:
             p.start()
             self.processes.append(p)
 
-    def state(self, epoch, state):
-        nodes = state['nodes']
+    def state(self, params, epoch, state):
         if epoch > 0:
             self.log_train_accuracy(epoch, state)
         if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
-            self.log_test_accuracy(epoch, state) 
+            self.log_test_accuracy(params, epoch, state)
         self.log_consensus_distance(epoch, state)
 
     def loss(self, loss):
@@ -158,16 +157,20 @@ class Logger:
 
         self.running_loss_count = 0
 
-    def log_test_accuracy(self, epoch, state):
+    def log_test_accuracy(self, params, epoch, state):
         nodes = state['nodes']
         params = self.params
 
-        for n in nodes:
-            rank = n['rank']
-            model = n['model']
-            event_file = n['event-file']
-            step = state['step']
-            self.tasks.put((n['rank'], epoch, step, pickle.dumps(n['model'].state_dict()), event_file))
+        # If we have a fully connected topology, it is wasteful to compute the test accuracy for all nodes since they
+        # are all the same. So we only compute it for one node
+        if params["topology"]["name"] == "fully-connected":
+            n = nodes[0]
+            self.tasks.put((n['rank'], epoch, state['step'], pickle.dumps(n['model'].state_dict()), n['event-file']))
+        else:
+            for n in nodes:
+                event_file = n['event-file']
+                step = state['step']
+                self.tasks.put((n['rank'], epoch, step, pickle.dumps(n['model'].state_dict()), event_file))
         self.tasks.join()
         
     def log_consensus_distance(self, epoch, state):

@@ -68,14 +68,14 @@ if __name__ == "__main__":
             topology = t.load(rundir)
 
         state,loss,done = algo.init(nodes, topology, params)
-        log.state(0,state)
+        log.state(params, 0, state)
         for epoch in range(1,args.nb_epochs+1):
             print('epoch {}'.format(epoch))
             while not done:
                 state,loss,done = algo.next(state, params)
                 if not done:
                     log.loss(loss)
-            log.state(epoch,state)
+            log.state(params, epoch, state)
             done = False
         logging.info('run() done')
 
