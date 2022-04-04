@@ -81,7 +81,7 @@ class Logger:
         self.params = params
         self.rundir = rundir
         self.running_loss = [ 0.0 for _ in range(nb_nodes) ]
-        self.running_loss_count = 0
+        self.running_loss_count = [0 for _ in range(nb_nodes)]
         self.global_events = os.path.join(rundir, 'events', 'global.jsonlines')
 
         self.tasks = JoinableQueue(maxsize=nb_nodes)
@@ -99,13 +99,10 @@ class Logger:
             self.log_test_accuracy(state)
         self.log_consensus_distance(epoch, state)
 
-    def loss(self, loss):
-        assert len(loss) == len(self.running_loss), \
-            "Inconsistent loss vector, expected {} values but got {}".format(
-            len(self.running_loss), len(loss))
-        for i in range(len(loss)):
-            self.running_loss[i] += loss[i]
-        self.running_loss_count += 1
+    def loss(self, losses):
+        for node_rank, loss in losses.items():
+            self.running_loss[node_rank] += loss
+            self.running_loss_count[node_rank] += 1
 
     def log_train_accuracy(self, state):
         if self.params['logger']['skip-training']:
@@ -137,8 +134,8 @@ class Logger:
                     correct += (predicted == target).sum().item()
                     example_number += target.size(0)
 
-            if self.running_loss_count > 0:
-                running_loss = self.running_loss[rank] / self.running_loss_count
+            if self.running_loss_count[rank] > 0:
+                running_loss = self.running_loss[rank] / self.running_loss_count[rank]
                 self.running_loss[rank] = 0.0
             else:
                 running_loss = 0.0
@@ -156,7 +153,7 @@ class Logger:
                     "timestamp": m.now()
                 }) + '\n')
 
-        self.running_loss_count = 0
+            self.running_loss_count[rank] = 0
 
     def log_test_accuracy(self, state):
         nodes = state['nodes']

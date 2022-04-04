@@ -151,7 +151,7 @@ def next_step(state, params):
     topology = state['topology']
 
     # Local Training
-    losses = []
+    losses = {}
     epoch_done = []
     for node in nodes:
         epoch_done_node = False
@@ -164,7 +164,7 @@ def next_step(state, params):
         loss = F.nll_loss(output, target)
         logging.info('d-sgd.next node {} backward propagation'.format(node['rank']))
         loss.backward()
-        losses.append(loss.tolist())
+        losses[node['rank']] = loss.tolist()
 
         # Reset the iterator if needed
         res = it_has_next(node['train-iterator'])
@@ -193,6 +193,7 @@ def next_step(state, params):
     state['step'] += 1
 
     return state, losses, all(epoch_done)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Provide Options for D-SGD Optimization Algorithm.')
