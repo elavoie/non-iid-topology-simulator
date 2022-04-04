@@ -68,7 +68,7 @@ def log_task(tasks, params):
                     "data": name,
                     "rank": rank,
                     "epoch": epoch,
-                    "batch": step,
+                    "step": step,
                     "loss": test_loss,
                     "accuracy": accuracy,
                     "timestamp": m.now()
@@ -146,7 +146,7 @@ class Logger:
                     "data": "train",
                     "rank": rank,
                     "epoch": epoch,
-                    "batch": state['step'],
+                    "step": state['step'],
                     "loss": total_loss/num_batches,
                     "running_loss": running_loss,
                     "accuracy": correct / example_number,
