@@ -92,9 +92,9 @@ class Logger:
             p.start()
             self.processes.append(p)
 
-    def state(self, params, epoch, state):
+    def state(self, epoch, state):
         if epoch > 0:
-            self.log_train_accuracy(epoch, state)
+            self.log_train_accuracy(state)
         if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
             self.log_test_accuracy(state)
         self.log_consensus_distance(epoch, state)
@@ -107,7 +107,7 @@ class Logger:
             self.running_loss[i] += loss[i]
         self.running_loss_count += 1
 
-    def log_train_accuracy(self, epoch, state):
+    def log_train_accuracy(self, state):
         if self.params['logger']['skip-training']:
             return
 
@@ -115,6 +115,7 @@ class Logger:
         params = self.params
         for n in nodes:
             rank = n['rank']
+            epoch = n['epoch']
             logging.info('logger.log_train_accuracy node {}'.format(rank))
             model = n['model']
             model.eval()
