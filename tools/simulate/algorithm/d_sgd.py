@@ -171,6 +171,7 @@ def next_step(state, params):
         if res is None:
             # Epoch complete - reset the iterator
             epoch_done_node = True
+            node['epoch'] += 1
             node['train-iterator'] = iter(torch.utils.data.DataLoader(
                 node['train-set'],
                 batch_size=int(params['algorithm']['batch-size']),

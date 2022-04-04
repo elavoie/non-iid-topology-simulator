@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
             nodes.append({
               'rank': rank,
+              'epoch': 0,
               'event-file': event_file,
               'train-set': [ train[i] for i in train_ind[rank] ],
               'train-iterator': None,
