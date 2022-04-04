@@ -97,7 +97,7 @@ class Logger:
             self.log_train_accuracy(state)
         if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
             self.log_test_accuracy(state)
-        self.log_consensus_distance(epoch, state)
+        self.log_consensus_distance(state)
 
     def loss(self, losses):
         for node_rank, loss in losses.items():
@@ -171,7 +171,7 @@ class Logger:
                 self.tasks.put((n['rank'], n['epoch'], step, pickle.dumps(n['model'].state_dict()), event_file))
         self.tasks.join()
         
-    def log_consensus_distance(self, epoch, state):
+    def log_consensus_distance(self, state):
         logging.info('logger.log_consensus_distance')
         models = [ n['model'] for n in state['nodes'] ]
         center = setup.model.average(models)
@@ -185,7 +185,7 @@ class Logger:
         with open(self.global_events, 'a') as events:
             events.write(json.dumps({
                 "type": "consensus-distance",
-                "epoch": epoch,
+                "step": state['step'],
                 "distance_to_center": {
                     "global": {
                         "avg": avg,
