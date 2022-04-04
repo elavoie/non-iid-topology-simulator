@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import itertools
+
 import torch
 import argparse
 import setup.meta as m
@@ -134,7 +136,16 @@ def init(nodes, topology, params):
 
     return (state, 0, False)
 
-def next(state, params):
+
+def it_has_next(iterable):
+    try:
+        first = next(iterable)
+    except StopIteration:
+        return None
+    return itertools.chain([first], iterable)
+
+
+def next_step(state, params):
     logging.info('d-sgd.next step {}'.format(state['step']))
     nodes = state['nodes']
     topology = state['topology']
@@ -143,40 +154,44 @@ def next(state, params):
     losses = []
     epoch_done = []
     for node in nodes:
+        epoch_done_node = False
         logging.info('d-sgd.next computing gradient step on node {}'.format(node['rank']))
-        try:
-            data,target = node['train-iterator'].__next__()
-            data, target = Variable(data), Variable(target)
-            node['optimizer'].zero_grad()
-            logging.info('d-sgd.next node {} forward propagation'.format(node['rank']))
-            output = node['model'].forward(data, params)
-            loss = F.nll_loss(output, target)
-            logging.info('d-sgd.next node {} backward propagation'.format(node['rank']))
-            loss.backward()
-            losses.append(loss.tolist())
-            epoch_done.append(False)
-        except StopIteration:
-            epoch_done.append(True)
+        data,target = node['train-iterator'].__next__()
+        data, target = Variable(data), Variable(target)
+        node['optimizer'].zero_grad()
+        logging.info('d-sgd.next node {} forward propagation'.format(node['rank']))
+        output = node['model'].forward(data, params)
+        loss = F.nll_loss(output, target)
+        logging.info('d-sgd.next node {} backward propagation'.format(node['rank']))
+        loss.backward()
+        losses.append(loss.tolist())
 
-    assert all(epoch_done) or not any(epoch_done), "Some nodes completed their epoch before others."
-   
-    if not all(epoch_done):
-        # Apply Gradients
-        gradient(nodes, topology, params)
-
-        # Average with Neighbours
-        average(nodes, topology, params)
-
-        state['step'] += 1
-    else:
-        for n in nodes:
-            n['train-iterator'] = iter(torch.utils.data.DataLoader(
-                n['train-set'], 
+        # Reset the iterator if needed
+        res = it_has_next(node['train-iterator'])
+        if res is None:
+            # Epoch complete - reset the iterator
+            epoch_done_node = True
+            node['train-iterator'] = iter(torch.utils.data.DataLoader(
+                node['train-set'],
                 batch_size=int(params['algorithm']['batch-size']),
                 shuffle=True
             ))
+        else:
+            node['train-iterator'] = res
 
-    return (state, losses, all(epoch_done))
+        epoch_done.append(epoch_done_node)
+
+    assert all(epoch_done) or not any(epoch_done), "Some nodes completed their epoch before others."
+   
+    # Apply Gradients
+    gradient(nodes, topology, params)
+
+    # Average with Neighbours
+    average(nodes, topology, params)
+
+    state['step'] += 1
+
+    return state, losses, all(epoch_done)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Provide Options for D-SGD Optimization Algorithm.')
