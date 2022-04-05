@@ -76,7 +76,8 @@ if __name__ == "__main__":
         else:
             for node in nodes:
                 log.state(node, state)
-        log.log_consensus_distance(state)
+        if params["logger"]["log-consensus-distance"]:
+            log.log_consensus_distance(state)
 
         while True:
             state, losses, done = algo.next_step(state, params)
@@ -89,7 +90,8 @@ if __name__ == "__main__":
                     else:
                         for node in nodes:
                             log.state(node, state)
-                    log.log_consensus_distance(state)
+                    if params["logger"]["log-consensus-distance"]:
+                        log.log_consensus_distance(state)
 
             # Are we done?
             if all([node['epoch'] >= args.nb_epochs for node in nodes]):
