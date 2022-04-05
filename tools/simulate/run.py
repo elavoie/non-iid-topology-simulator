@@ -70,14 +70,16 @@ if __name__ == "__main__":
 
         state, losses, done = algo.init(nodes, topology, params)
         log.state(0, state)
-        for epoch in range(1, args.nb_epochs+1):
-            print('epoch {}'.format(epoch))
-            while not done:
-                state, losses, done = algo.next_step(state, params)
-                if not done:
-                    log.loss(losses)
-            log.state(epoch, state)
-            done = False
+        while True:
+            state, losses, done = algo.next_step(state, params)
+            log.loss(losses)
+            if done:
+                log.state(nodes[0]['epoch'], state)
+
+            # Are we done?
+            if all([node['epoch'] >= args.nb_epochs for node in nodes]):
+                break
+
         logging.info('run() done')
 
     # The main loop is also run in a separate process to avoid the deadlock
