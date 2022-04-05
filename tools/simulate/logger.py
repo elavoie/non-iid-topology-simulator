@@ -92,80 +92,66 @@ class Logger:
             p.start()
             self.processes.append(p)
 
-    def state(self, epoch, state):
-        if epoch > 0 and not self.params['logger']['skip-training']:
-            self.log_train_accuracy(state)
-        if epoch % self.params['logger']['accuracy-logging-interval'] == 0:
-            self.log_test_accuracy(state)
-        self.log_consensus_distance(state)
+    def state(self, node, state):
+        if not self.params['logger']['skip-training']:
+            self.log_train_accuracy(node, state)
+        self.log_test_accuracy(node, state)
 
     def loss(self, losses):
         for node_rank, loss in losses.items():
             self.running_loss[node_rank] += loss
             self.running_loss_count[node_rank] += 1
 
-    def log_train_accuracy(self, state):
-        nodes = state['nodes']
+    def log_train_accuracy(self, node, state):
         params = self.params
-        for n in nodes:
-            rank = n['rank']
-            epoch = n['epoch']
-            logging.info('logger.log_train_accuracy node {}'.format(rank))
-            model = n['model']
-            model.eval()
-            event_file = n['event-file']
-            total_loss = 0.0
-            num_batches = 0.0
-            correct = 0.0
-            example_number = 0.0
-            train = torch.utils.data.DataLoader(n['train-set'], 1000)
+        rank = node['rank']
+        epoch = node['epoch']
+        logging.info('logger.log_train_accuracy node {}'.format(rank))
+        model = node['model']
+        model.eval()
+        event_file = node['event-file']
+        total_loss = 0.0
+        num_batches = 0.0
+        correct = 0.0
+        example_number = 0.0
+        train = torch.utils.data.DataLoader(node['train-set'], 1000)
 
-            with torch.no_grad():
-                for data, target in train:
-                    data, target = Variable(data), Variable(target)
-                    output = model.forward(data, params)
-                    loss = F.nll_loss(output, target)
-                    total_loss += loss.item()
-                    num_batches += 1.0
-                    _, predicted = torch.max(output.data, 1)
-                    correct += (predicted == target).sum().item()
-                    example_number += target.size(0)
+        with torch.no_grad():
+            for data, target in train:
+                data, target = Variable(data), Variable(target)
+                output = model.forward(data, params)
+                loss = F.nll_loss(output, target)
+                total_loss += loss.item()
+                num_batches += 1.0
+                _, predicted = torch.max(output.data, 1)
+                correct += (predicted == target).sum().item()
+                example_number += target.size(0)
 
-            if self.running_loss_count[rank] > 0:
-                running_loss = self.running_loss[rank] / self.running_loss_count[rank]
-                self.running_loss[rank] = 0.0
-            else:
-                running_loss = 0.0
-
-            with open(event_file, 'a') as events:
-                events.write(json.dumps({
-                    "type": "accuracy",
-                    "data": "train",
-                    "rank": rank,
-                    "epoch": epoch,
-                    "step": state['step'],
-                    "loss": total_loss/num_batches,
-                    "running_loss": running_loss,
-                    "accuracy": correct / example_number,
-                    "timestamp": m.now()
-                }) + '\n')
-
-            self.running_loss_count[rank] = 0
-
-    def log_test_accuracy(self, state):
-        nodes = state['nodes']
-        params = self.params
-
-        # If we have a fully connected topology, it is wasteful to compute the test accuracy for all nodes since they
-        # are all the same. So we only compute it for one node
-        if params["topology"]["name"] == "fully-connected":
-            n = nodes[0]
-            self.tasks.put((n['rank'], n['epoch'], state['step'], pickle.dumps(n['model'].state_dict()), n['event-file']))
+        if self.running_loss_count[rank] > 0:
+            running_loss = self.running_loss[rank] / self.running_loss_count[rank]
+            self.running_loss[rank] = 0.0
         else:
-            for n in nodes:
-                event_file = n['event-file']
-                step = state['step']
-                self.tasks.put((n['rank'], n['epoch'], step, pickle.dumps(n['model'].state_dict()), event_file))
+            running_loss = 0.0
+
+        with open(event_file, 'a') as events:
+            events.write(json.dumps({
+                "type": "accuracy",
+                "data": "train",
+                "rank": rank,
+                "epoch": epoch,
+                "step": state['step'],
+                "loss": total_loss/num_batches,
+                "running_loss": running_loss,
+                "accuracy": correct / example_number,
+                "timestamp": m.now()
+            }) + '\n')
+
+        self.running_loss_count[rank] = 0
+
+    def log_test_accuracy(self, node, state):
+        event_file = node['event-file']
+        step = state['step']
+        self.tasks.put((node['rank'], node['epoch'], step, pickle.dumps(node['model'].state_dict()), event_file))
         self.tasks.join()
         
     def log_consensus_distance(self, state):

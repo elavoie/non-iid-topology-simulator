@@ -69,12 +69,27 @@ if __name__ == "__main__":
             topology = t.load(rundir)
 
         state, losses, done = algo.init(nodes, topology, params)
-        log.state(0, state)
+        
+        # Initial logging
+        if params["topology"]["name"] == "fully-connected":
+            log.state(nodes[0], state)
+        else:
+            for node in nodes:
+                log.state(node, state)
+        log.log_consensus_distance(state)
+
         while True:
             state, losses, done = algo.next_step(state, params)
             log.loss(losses)
+
             if done:
-                log.state(nodes[0]['epoch'], state)
+                if nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+                    if params["topology"]["name"] == "fully-connected":
+                        log.state(nodes[0], state)
+                    else:
+                        for node in nodes:
+                            log.state(node, state)
+                    log.log_consensus_distance(state)
 
             # Are we done?
             if all([node['epoch'] >= args.nb_epochs for node in nodes]):
