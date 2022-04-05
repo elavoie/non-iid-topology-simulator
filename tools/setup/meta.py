@@ -57,6 +57,8 @@ if __name__ == "__main__":
         help='seed for pseudo-random number generator')
     parser.add_argument('--script', type=str, default=None,
         help='name of calling script (default: this executable name)')
+    parser.add_argument('--rundir', type=str, default=None,
+        help='override the experiment rundir (default: None)')
     parser.add_argument('--log', type=str, default='WARNING', 
         choices=['NOTSET', 'INFO', 'DEBUG', 'PARTITION', 'WARNING'],
         help='log level to use (default: WARNING)')
@@ -70,7 +72,8 @@ if __name__ == "__main__":
 
     # Setup Results Directory
     hostname = socket.gethostname()
-    rundir = os.path.join(args.results_directory, time.strftime('%Y-%m-%d-%H:%M:%S-%Z') + '-{}'.format(hostname))
+    rundir = os.path.join(args.results_directory, args.rundir) if args.rundir else \
+             os.path.join(args.results_directory, time.strftime('%Y-%m-%d-%H:%M:%S-%Z') + '-{}'.format(hostname))
     os.makedirs(rundir)
     event_dir = os.path.join(rundir, 'events')
     os.makedirs(event_dir)
