@@ -71,7 +71,7 @@ if __name__ == "__main__":
         state, losses, done = algo.init(nodes, topology, params)
         
         # Initial logging
-        if params["topology"]["name"] == "fully-connected":
+        if params["topology"]["name"] in ["fully-connected", "sample"]:
             log.state(nodes[0], state)
         else:
             for node in nodes:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
             state, losses, epoch_done, active_nodes = algo.next_step(state, params)
             log.loss(losses)
 
-            if params["topology"]["name"] == "fully-connected" and all(epoch_done.values()) and nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+            if params["topology"]["name"] in ["fully-connected", "sample"] and all(epoch_done.values()) and nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
                 log.state(nodes[0], state)
             else:
                 for active_node in active_nodes:

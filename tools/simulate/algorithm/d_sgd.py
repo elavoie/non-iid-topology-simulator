@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import copy
 import itertools
+from random import Random
 
 import torch
 import argparse
@@ -9,6 +11,8 @@ import setup.model
 import setup.topology as t
 from torch.autograd import Variable
 import torch.nn.functional as F
+import torch.optim as optim
+
 
 def average_gradients(models):
     with torch.no_grad():
@@ -147,7 +151,8 @@ def it_has_next(iterable):
 
 def next_step(state, params):
     logging.info('d-sgd.next step {}'.format(state['step']))
-    active_nodes = state['nodes']
+    rnd = Random(42)
+    active_nodes = state['nodes'] if params["topology"]["name"] != "sample" else rnd.sample(state['nodes'], params["topology"]["sample-size"])
     topology = state['topology']
 
     # Local Training
@@ -182,11 +187,27 @@ def next_step(state, params):
 
         epoch_done[node['rank']] = epoch_done_node
 
-    # Apply Gradients
-    gradient(active_nodes, topology, params)
+    if params["topology"]["name"] != "sample":
+        # Apply Gradients
+        gradient(active_nodes, topology, params)
 
-    # Average with Neighbours
-    average(active_nodes, topology, params)
+        # Average with Neighbours
+        average(active_nodes, topology, params)
+    else:
+        # Apply gradients
+        for n in active_nodes:
+            n['optimizer'].step()
+
+        # Average the model and replace the model of other nodes with the aggregated one
+        with torch.no_grad():
+            # Compute averages of the models of active nodes
+            logging.info(f'  computing average model of sample consisting of {len(active_nodes)} nodes')
+            models = [n['model'] for n in active_nodes]
+            weights = [1 / len(active_nodes) for _ in active_nodes]
+            avg_model = setup.model.average(models, weights)
+
+            # Replace the current model of every node with this one
+            update_models(models, avg_model)
 
     state['step'] += 1
 
