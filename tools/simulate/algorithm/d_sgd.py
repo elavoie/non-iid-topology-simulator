@@ -147,13 +147,13 @@ def it_has_next(iterable):
 
 def next_step(state, params):
     logging.info('d-sgd.next step {}'.format(state['step']))
-    nodes = state['nodes']
+    active_nodes = state['nodes']
     topology = state['topology']
 
     # Local Training
     losses = {}
-    epoch_done = []
-    for node in nodes:
+    epoch_done = {}
+    for node in active_nodes:
         epoch_done_node = False
         logging.info('d-sgd.next computing gradient step on node {}'.format(node['rank']))
         data,target = node['train-iterator'].__next__()
@@ -180,19 +180,17 @@ def next_step(state, params):
         else:
             node['train-iterator'] = res
 
-        epoch_done.append(epoch_done_node)
+        epoch_done[node['rank']] = epoch_done_node
 
-    assert all(epoch_done) or not any(epoch_done), "Some nodes completed their epoch before others."
-   
     # Apply Gradients
-    gradient(nodes, topology, params)
+    gradient(active_nodes, topology, params)
 
     # Average with Neighbours
-    average(nodes, topology, params)
+    average(active_nodes, topology, params)
 
     state['step'] += 1
 
-    return state, losses, all(epoch_done)
+    return state, losses, epoch_done, active_nodes
 
 
 if __name__ == "__main__":

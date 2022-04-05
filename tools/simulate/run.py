@@ -79,19 +79,19 @@ if __name__ == "__main__":
         if params["logger"]["log-consensus-distance"]:
             log.log_consensus_distance(state)
 
-        while True:
-            state, losses, done = algo.next_step(state, params)
+        while True:  # Main loop
+            state, losses, epoch_done, active_nodes = algo.next_step(state, params)
             log.loss(losses)
 
-            if done:
-                if nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
-                    if params["topology"]["name"] == "fully-connected":
-                        log.state(nodes[0], state)
-                    else:
-                        for node in nodes:
-                            log.state(node, state)
-                    if params["logger"]["log-consensus-distance"]:
-                        log.log_consensus_distance(state)
+            if params["topology"]["name"] == "fully-connected" and all(epoch_done.values()) and nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+                log.state(nodes[0], state)
+            else:
+                for active_node in active_nodes:
+                    if epoch_done[active_node['rank']] and active_node['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+                        log.state(active_node, state)
+
+            if all(epoch_done.values()) and params["logger"]["log-consensus-distance"]:
+                log.log_consensus_distance(state)
 
             # Are we done?
             if all([node['epoch'] >= args.nb_epochs for node in nodes]):
