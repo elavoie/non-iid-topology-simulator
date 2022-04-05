@@ -201,6 +201,8 @@ if __name__ == "__main__":
             help='Number of parallel processes to log the accuracy of models. (default: 8)')
     parser.add_argument('--accuracy-logging-interval', type=int, default=1, metavar='N',
                         help='Log validation and test accuracy every X epochs. (default: 1)')
+    parser.add_argument('--accuracy-logging-interval-steps', type=int, default=0, metavar='S',
+                        help='Log validation and test accuracy every X steps. (default: 0)')
     parser.add_argument('--skip-validation', action='store_const', const=True, default=False, 
             help="Skip accuracy measurements on validation set. ( default: False)")
     parser.add_argument('--skip-testing', action='store_const', const=True, default=False, 
@@ -216,6 +218,7 @@ if __name__ == "__main__":
     logger = {
         'nb-processes': args.nb_processes,
         'accuracy-logging-interval': args.accuracy_logging_interval,
+        'accuracy-logging-interval-steps': args.accuracy_logging_interval_steps,
         'skip-testing': args.skip_testing,
         'skip-validation': args.skip_validation,
         'skip-training': args.skip_training,

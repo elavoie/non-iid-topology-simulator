@@ -6,11 +6,19 @@ import logging
 import torch
 import torchvision
 import os
-from random import Random
 import setup.dataset as dataset
 import setup.topology as t
 import simulate.logger as logger
 from torch.multiprocessing import Process
+
+
+def should_log(node, params, state):
+    if params['logger']['accuracy-logging-interval'] and node['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+        return True
+    elif params['logger']['accuracy-logging-interval-steps'] and state['step'] % params['logger']['accuracy-logging-interval-steps'] == 0:
+        return True
+    return False
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simulate the pre-configured run.')
@@ -18,6 +26,8 @@ if __name__ == "__main__":
             help='Directory of the run from which to load options.')
     parser.add_argument('--nb-epochs', type=int, default=10, metavar='N',
                         help='number of epochs (default: 10)')
+    parser.add_argument('--nb-steps', type=int, default=0, metavar='N',
+                        help='number of steps (default: 0)')
 
     args = parser.parse_args()
     rundir = m.rundir(args)
@@ -29,7 +39,8 @@ if __name__ == "__main__":
     node_desc = m.load(rundir, 'nodes.json')
 
     m.extend(rundir, 'simulator', {
-      'nb-epochs': args.nb_epochs
+      'nb-epochs': args.nb_epochs,
+      'nb-steps': args.nb_steps
     })
 
     # Logger initialized here so logging processes are siblings of the main
@@ -83,18 +94,21 @@ if __name__ == "__main__":
             state, losses, epoch_done, active_nodes = algo.next_step(state, params)
             log.loss(losses)
 
-            if params["topology"]["name"] in ["fully-connected", "sample"] and all(epoch_done.values()) and nodes[0]['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+            if params["topology"]["name"] in ["fully-connected", "sample"] and all(epoch_done.values()) and \
+                    should_log(nodes[0], params, state):
                 log.state(nodes[0], state)
             else:
                 for active_node in active_nodes:
-                    if epoch_done[active_node['rank']] and active_node['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+                    if epoch_done[active_node['rank']] and should_log(active_node, params, state):
                         log.state(active_node, state)
 
             if all(epoch_done.values()) and params["logger"]["log-consensus-distance"]:
                 log.log_consensus_distance(state)
 
             # Are we done?
-            if all([node['epoch'] >= args.nb_epochs for node in nodes]):
+            if args.nb_epochs and all([node['epoch'] >= args.nb_epochs for node in nodes]):
+                break
+            elif args.nb_steps and state['step'] == args.nb_steps:
                 break
 
         logging.info('run() done')
