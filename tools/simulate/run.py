@@ -12,8 +12,8 @@ import simulate.logger as logger
 from torch.multiprocessing import Process
 
 
-def should_log(node, params, state):
-    if params['logger']['accuracy-logging-interval'] and node['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
+def should_log(node, epoch_done, params, state):
+    if params['logger']['accuracy-logging-interval'] and epoch_done and node['epoch'] % params['logger']['accuracy-logging-interval'] == 0:
         return True
     elif params['logger']['accuracy-logging-interval-steps'] and state['step'] % params['logger']['accuracy-logging-interval-steps'] == 0:
         return True
@@ -94,12 +94,11 @@ if __name__ == "__main__":
             state, losses, epoch_done, active_nodes = algo.next_step(state, params)
             log.loss(losses)
 
-            if params["topology"]["name"] in ["fully-connected", "sample"] and all(epoch_done.values()) and \
-                    should_log(nodes[0], params, state):
+            if params["topology"]["name"] in ["fully-connected", "sample"] and should_log(nodes[0], epoch_done[0] if 0 in epoch_done else False, params, state):
                 log.state(nodes[0], state)
             else:
                 for active_node in active_nodes:
-                    if epoch_done[active_node['rank']] and should_log(active_node, params, state):
+                    if should_log(active_node, epoch_done[active_node['rank']], params, state):
                         log.state(active_node, state)
 
             if all(epoch_done.values()) and params["logger"]["log-consensus-distance"]:
