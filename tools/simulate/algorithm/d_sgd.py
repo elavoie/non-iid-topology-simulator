@@ -151,7 +151,7 @@ def it_has_next(iterable):
 
 def next_step(state, params):
     logging.info('d-sgd.next step {}'.format(state['step']))
-    rnd = Random(42)
+    rnd = Random(42 + state['step'])
     active_nodes = state['nodes'] if params["topology"]["name"] != "sample" else rnd.sample(state['nodes'], params["topology"]["sample-size"])
     topology = state['topology']
 
