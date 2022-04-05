@@ -1,3 +1,4 @@
+import copy
 import sys
 import setup.model.linear as linear
 import torch
@@ -15,7 +16,7 @@ def average(models, weights=None):
     with torch.no_grad():
         if weights == None:
             weights = [ float(1./len(models)) for _ in range(len(models)) ]
-        center_model = models[0].copy()
+        center_model = copy.deepcopy(models[0])
         for p in center_model.parameters():
             p.mul_(0)
         for m, w in zip(models, weights):

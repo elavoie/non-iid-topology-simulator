@@ -54,12 +54,6 @@ class GN_LeNet(nn.Module):
         x = self.classifier(x)
         return F.log_softmax(x, dim=1)
 
-    def copy(self):
-        c = GN_LeNet(self.params, self.input_channel, self.output, self.model_input)
-        for c1, s1 in zip(c.parameters(), self.parameters()):
-            c1.mul_(0)
-            c1.add_(s1)
-        return c
 
 def classifier_input_calculator(y,z):
     """Given the input shape of GN_Lenet, returns the size of the output of the Sequential module.

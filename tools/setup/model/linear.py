@@ -25,13 +25,6 @@ class Net(torch.nn.Module):
         x = self.fc(x.view(-1, params['model']['input-size']))
         return F.log_softmax(x, dim=1)
 
-    def copy(self):
-        c = Net(self.input_size)
-        for c1, s1 in zip(c.parameters(), self.parameters()):
-            c1.mul_(0)
-            c1.add_(s1)
-        return c
-
 def create(params):
     return Net(params['model']['input-size'])
 
