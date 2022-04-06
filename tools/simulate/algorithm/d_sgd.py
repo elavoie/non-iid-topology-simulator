@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import copy
 import itertools
+import json
+import os
 from random import Random
 
 import torch
@@ -149,7 +151,7 @@ def it_has_next(iterable):
     return itertools.chain([first], iterable)
 
 
-def next_step(state, params):
+def next_step(state, params, rundir):
     logging.info('d-sgd.next step {}'.format(state['step']))
     rnd = Random(42 + state['step'])
     active_nodes = state['nodes'] if params["topology"]["name"] != "sample" else rnd.sample(state['nodes'], params["topology"]["sample-size"])
@@ -193,6 +195,20 @@ def next_step(state, params):
 
         # Average with Neighbours
         average(active_nodes, topology, params)
+
+        # Randomize the topology if needed
+        if params["topology"]["name"] == "random-graph" and params["topology"]["randomize"]:
+            logging.info("Randomizing neighbours")
+            params['topology']['topology-seed'] += 1  # To make sure that a new graph is generated
+
+            from setup.topology.random_graph import generate_topology
+            new_topology = generate_topology(state['nodes'], params)
+            with open(os.path.join(rundir, 'topology.json'), 'w+') as topology_file:
+                json.dump(new_topology, topology_file)
+            edges = new_topology['edges']
+            new_topology['edges'] = {int(rank): edges[rank] for rank in edges}
+            new_topology['weights'] = torch.tensor(new_topology['weights'])
+            state['topology'] = new_topology
     else:
         # Apply gradients
         for n in active_nodes:

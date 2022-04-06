@@ -91,7 +91,7 @@ if __name__ == "__main__":
             log.log_consensus_distance(state)
 
         while True:  # Main loop
-            state, losses, epoch_done, active_nodes = algo.next_step(state, params)
+            state, losses, epoch_done, active_nodes = algo.next_step(state, params, rundir)
             log.loss(losses)
 
             if params["topology"]["name"] in ["fully-connected", "sample"] and should_log(nodes[0], epoch_done[0] if 0 in epoch_done else False, params, state):
