@@ -151,10 +151,33 @@ def it_has_next(iterable):
     return itertools.chain([first], iterable)
 
 
+cached_samples = {}
+
+
+def get_sample(state, params, step):
+    if step in cached_samples:
+        return cached_samples[step]
+
+    rnd = Random(42 + step)
+    if params["topology"]["sample-method"] == "random":
+        return rnd.sample(state['nodes'], params["topology"]["sample-size"])
+    elif params["topology"]["sample-method"] == "random-with-overlap":
+        if step == 0:  # The first sample is fully random
+            return rnd.sample(state['nodes'], params["topology"]["sample-size"])
+        else:
+            # The sample at step x requires us to know the sample at step x-1 so we can derive overlap.
+            active_nodes_last_step = get_sample(state, params, step - 1)
+            active_nodes = rnd.sample(active_nodes_last_step, params["topology"]["sample-overlap"])
+            eligible_nodes = [n for n in state['nodes'] if n not in active_nodes]
+            active_nodes += rnd.sample(eligible_nodes, params["topology"]["sample-size"] - params["topology"]["sample-overlap"])
+
+            cached_samples[step] = active_nodes
+            return active_nodes
+
+
 def next_step(state, params, rundir):
     logging.info('d-sgd.next step {}'.format(state['step']))
-    rnd = Random(42 + state['step'])
-    active_nodes = state['nodes'] if params["topology"]["name"] != "sample" else rnd.sample(state['nodes'], params["topology"]["sample-size"])
+    active_nodes = state['nodes'] if params["topology"]["name"] != "sample" else get_sample(state, params, state["step"])
     topology = state['topology']
 
     # Local Training
