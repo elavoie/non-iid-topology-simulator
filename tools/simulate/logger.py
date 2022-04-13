@@ -6,7 +6,7 @@ import pickle
 import copy
 import os
 import math
-import time
+import subprocess
 from importlib import import_module
 import torch
 import torch.nn.functional as F
@@ -16,6 +16,8 @@ import setup.meta as m
 import setup.dataset as d
 import setup.model
 import statistics
+from setup import get_das5_nodes
+
 
 def model_accuracy(model, dataset, params):
     model.eval()
@@ -92,10 +94,51 @@ class Logger:
             p.start()
             self.processes.append(p)
 
-    def state(self, node, state):
+    def state(self, nodes, state):
+        if not nodes:
+            return
+
+        logging.info('logger.state step %d (%d nodes)', state["step"], len(nodes))
         if not self.params['logger']['skip-training']:
-            self.log_train_accuracy(node, state)
-        self.log_test_accuracy(node, state)
+            self.log_train_accuracy(nodes, state)
+
+        # Serialize all the models that should be checked
+        model_paths = []
+        for node in nodes:
+            serialized_model = pickle.dumps(node["model"].state_dict())
+            filename = "%d_%d" % (state["step"], node["rank"])
+            models_dir = os.path.join(self.rundir, "models")
+            if not os.path.exists(models_dir):
+                os.mkdir(models_dir)
+
+            model_path = os.path.join(models_dir, filename)
+            model_paths.append(model_path)
+            with open(model_path, "wb") as model_file:
+                model_file.write(serialized_model)
+
+        # Depending on the number of reserved nodes, start several logging instances
+        reserved_das5_nodes = get_das5_nodes(os.environ["SLURM_JOB_NODELIST"])
+        total_loggers = len(reserved_das5_nodes) * 3  # Three instances per reserved DAS5 node
+
+        procs = []
+        logger_ind = 0
+        for reserved_das5_node in reserved_das5_nodes:
+            for ind in range(3):
+                cmd = "ssh node%d \"source /home/spandey/venv3/bin/activate && PYTHONPATH=%s python %s/simulate/run_logger.py %s %d %d\"" % (reserved_das5_node, os.getcwd(), os.getcwd(), self.rundir, total_loggers, logger_ind)
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                procs.append(p)
+                logger_ind += 1
+
+        for p in procs:
+            p.wait()
+            logging.info("logger.state process finished")
+            #output, err = p.communicate()
+
+        # Remove the models again
+        for model_path in model_paths:
+            os.unlink(model_path)
+
+        #self.log_test_accuracy(node, state)
 
     def loss(self, losses):
         for node_rank, loss in losses.items():

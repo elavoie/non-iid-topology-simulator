@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+import socket
 from importlib import import_module
 import argparse
+
 import setup.meta as m
 import logging
 import torch
@@ -9,6 +11,8 @@ import os
 import setup.dataset as dataset
 import setup.topology as t
 import simulate.logger as logger
+from setup import get_das5_nodes
+
 from torch.multiprocessing import Process
 
 
@@ -32,6 +36,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     rundir = m.rundir(args)
     params = m.params(rundir)
+
+    # If we are running on the DAS5, we only want to start the main process on the first node of the reservation.
+    if "SLURM_JOB_NODELIST" in os.environ:
+        das5_node_list = get_das5_nodes(os.environ["SLURM_JOB_NODELIST"])
+        head_node_name = "node%d" % das5_node_list[0]
+        if socket.gethostname() != head_node_name:
+            print("We are node %s and not the head node - exiting main process" % socket.gethostname())
+            exit(0)
+
     logging.basicConfig(level=getattr(logging, params['meta']['log'].upper(), None))
 
     algo = import_module(params['algorithm']['module'])
@@ -83,10 +96,9 @@ if __name__ == "__main__":
         
         # Initial logging
         if params["topology"]["name"] in ["fully-connected", "sample"]:
-            log.state(nodes[0], state)
+            log.state([nodes[0]], state)
         else:
-            for node in nodes:
-                log.state(node, state)
+            log.state(nodes, state)
         if params["logger"]["log-consensus-distance"]:
             log.log_consensus_distance(state)
 
@@ -95,11 +107,13 @@ if __name__ == "__main__":
             log.loss(losses)
 
             if params["topology"]["name"] in ["fully-connected", "sample"] and should_log(nodes[0], epoch_done[0] if 0 in epoch_done else False, params, state):
-                log.state(nodes[0], state)
+                log.state([nodes[0]], state)
             else:
+                nodes_to_log = []
                 for active_node in active_nodes:
                     if should_log(active_node, epoch_done[active_node['rank']], params, state):
-                        log.state(active_node, state)
+                        nodes_to_log.append(active_node)
+                log.state(nodes_to_log, state)
 
             if all(epoch_done.values()) and params["logger"]["log-consensus-distance"]:
                 log.log_consensus_distance(state)
