@@ -246,7 +246,8 @@ def next_step(state, params, rundir):
             avg_model = setup.model.average(models, weights)
 
             # Replace the current model of every node with this one
-            update_models(models, avg_model)
+            all_models = [n['model'] for n in state['nodes']]
+            update_models(all_models, avg_model)
 
     state['step'] += 1
 
