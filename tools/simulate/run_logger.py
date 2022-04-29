@@ -48,6 +48,7 @@ if __name__ == "__main__":
     params = m.params(rundir)
 
     test_set = torch.utils.data.DataLoader(d.test(params), 100)
+    validation_set = torch.utils.data.DataLoader(d.valid(params), 100)
 
     # Read the directory with models and assign them to this logger instance
     models_dir = os.path.join(rundir, "models")
@@ -63,20 +64,21 @@ if __name__ == "__main__":
             serialized_model = in_file.read()
             model.load_state_dict(pickle.loads(serialized_model))
 
-        step, node_rank = filename.split("_")
-        step = int(step)
-        node_rank = int(node_rank)
-        print("Computing step %d accuracy for node %d" % (step, node_rank))
-        accuracy, test_loss = model_accuracy(model, test_set, params)
-        event_file = os.path.join(rundir, "events", "{}.jsonlines".format(node_rank))
-        with open(event_file, 'a') as events:
-            events.write(json.dumps({
-                "type": "accuracy",
-                "data": "test",
-                "rank": node_rank,
-                "epoch": 0,
-                "step": step,
-                "loss": test_loss,
-                "accuracy": accuracy,
-                "timestamp": m.now()
-            }) + '\n')
+        for type, dataset in [("test", test_set), ("valid", validation_set)]:
+            step, node_rank = filename.split("_")
+            step = int(step)
+            node_rank = int(node_rank)
+            print("Computing step %d accuracy for node %d" % (step, node_rank))
+            accuracy, test_loss = model_accuracy(model, dataset, params)
+            event_file = os.path.join(rundir, "events", "{}.jsonlines".format(node_rank))
+            with open(event_file, 'a') as events:
+                events.write(json.dumps({
+                    "type": "accuracy",
+                    "data": type,
+                    "rank": node_rank,
+                    "epoch": 0,
+                    "step": step,
+                    "loss": test_loss,
+                    "accuracy": accuracy,
+                    "timestamp": m.now()
+                }) + '\n')
