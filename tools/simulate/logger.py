@@ -100,7 +100,8 @@ class Logger:
 
         logging.info('logger.state step %d (%d nodes)', state["step"], len(nodes))
         if not self.params['logger']['skip-training']:
-            self.log_train_accuracy(nodes, state)
+            for node in nodes:
+                self.log_train_accuracy(node, state)
 
         # Serialize all the models that should be checked
         model_paths = []
