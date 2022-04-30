@@ -127,7 +127,7 @@ class Logger:
             with open(meta_path, "w") as meta_file:
                 json.dump({
                     "rank": node["rank"],
-                    "step": node["step"],
+                    "step": state["step"],
                     "epoch": node["epoch"]
                 }, meta_file)
 
