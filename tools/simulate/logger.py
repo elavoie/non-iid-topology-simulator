@@ -117,6 +117,20 @@ class Logger:
             with open(model_path, "wb") as model_file:
                 model_file.write(serialized_model)
 
+        # Serialize meta information about nodes (ex: epoch)
+        meta_dir = os.path.join(self.rundir, "meta")
+        if not os.path.exists(meta_dir):
+            os.mkdir(meta_dir)
+        for node in nodes:
+            filename = "%d_%d" % (state["step"], node["rank"])
+            meta_path = os.path.join(meta_dir, filename)
+            with open(meta_path, "w") as meta_file:
+                json.dump({
+                    "rank": node["rank"],
+                    "step": node["step"],
+                    "epoch": node["epoch"]
+                }, meta_file)
+
         # Depending on the number of reserved nodes, start several logging instances
         reserved_das5_nodes = get_das5_nodes(os.environ["SLURM_JOB_NODELIST"])
         total_loggers = len(reserved_das5_nodes) * 3  # Three instances per reserved DAS5 node

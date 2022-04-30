@@ -52,6 +52,7 @@ if __name__ == "__main__":
 
     # Read the directory with models and assign them to this logger instance
     models_dir = os.path.join(rundir, "models")
+    meta_dir = os.path.join(rundir, "meta")
     filenames = os.listdir(models_dir)
     assignments = chunks(filenames, total_loggers)
     my_models = assignments[my_logger_index]
@@ -64,20 +65,21 @@ if __name__ == "__main__":
             serialized_model = in_file.read()
             model.load_state_dict(pickle.loads(serialized_model))
 
+        node = None
+        with open(os.path.join(meta_dir, filename), "r") as meta_file:
+            node = json.load(meta_file)
+
         for type, dataset in [("test", test_set), ("valid", validation_set)]:
-            step, node_rank = filename.split("_")
-            step = int(step)
-            node_rank = int(node_rank)
-            print("Computing step %d accuracy for node %d" % (step, node_rank))
+            print("Computing step %d accuracy for node %d" % (node["step"], node["rank"]))
             accuracy, test_loss = model_accuracy(model, dataset, params)
-            event_file = os.path.join(rundir, "events", "{}.jsonlines".format(node_rank))
+            event_file = os.path.join(rundir, "events", "{}.jsonlines".format(node["rank"]))
             with open(event_file, 'a') as events:
                 events.write(json.dumps({
                     "type": "accuracy",
                     "data": type,
-                    "rank": node_rank,
-                    "epoch": 0,
-                    "step": step,
+                    "rank": node["rank"],
+                    "epoch": node["epoch"],
+                    "step": node["step"],
                     "loss": test_loss,
                     "accuracy": accuracy,
                     "timestamp": m.now()
