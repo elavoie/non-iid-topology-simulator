@@ -109,9 +109,13 @@ class Logger:
             assert all(map(lambda n: n["epoch"] == epoch, nodes)), "Inconsistent epochs between nodes"
             center = setup.model.average([ n['model'] for n in nodes ])
 
-            global_dir = os.path.join(self.rundir, "global", "model")
+            global_dir = os.path.join(self.rundir, "global")
             if not os.path.exists(global_dir):
                 os.mkdirs(global_dir)
+
+            global_model_dir = os.path.join(self.rundir, "global", "model")
+            if not os.path.exists(global_model_dir):
+                os.mkdirs(global_model_dir)
 
             global_meta_dir = os.path.join(self.rundir, "global", "meta")
             if not os.path.exists(global_meta_dir):
