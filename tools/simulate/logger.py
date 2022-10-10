@@ -96,10 +96,9 @@ class Logger:
 
     def state(self, nodes, state):
         if not nodes:
-            logging.warning('logger.state no nodes to log')
             return
 
-        logging.warning('logger.state step %d (%d nodes)', state["step"], len(nodes))
+        logging.info('logger.state step %d (%d nodes)', state["step"], len(nodes))
         if not self.params['logger']['skip-training']:
             for node in nodes:
                 self.log_train_accuracy(node, state)
@@ -176,11 +175,14 @@ class Logger:
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 procs.append(p)
                 logger_ind += 1
+        
 
         for p in procs:
             p.wait()
             logging.info("logger.state process finished")
-            #output, err = p.communicate()
+            output, err = p.communicate()
+            if p.returncode != 0: 
+                logging.error(err)
 
         # Remove the temporary files
         if global_model_path:
