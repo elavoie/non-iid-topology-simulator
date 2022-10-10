@@ -104,6 +104,8 @@ class Logger:
                 self.log_train_accuracy(node, state)
 
         # Serialize the average of all models
+        global_model_path = None
+        global_meta_path = None
         if self.params['logger']['log-global-model-accuracy']:
             epoch = nodes[0]["epoch"]
             assert all(map(lambda n: n["epoch"] == epoch, nodes)), "Inconsistent epochs between nodes"
@@ -121,9 +123,9 @@ class Logger:
             if not os.path.exists(global_meta_dir):
                 os.mkdir(global_meta_dir)
 
-            global_path = os.path.join(self.rundir, "global", "model", str(state["step"]))
+            global_model_path = os.path.join(self.rundir, "global", "model", str(state["step"]))
             global_meta_path = os.path.join(self.rundir, "global", "meta", str(state["step"]))
-            with open(global_path, "wb") as center_file:
+            with open(global_model_path, "wb") as center_file:
                 center_file.write(pickle.dumps(center.state_dict()))
             with open(global_meta_path, "w") as center_meta_file:
                 json.dump({
@@ -180,8 +182,11 @@ class Logger:
             #output, err = p.communicate()
 
         # Remove the temporary files
-        os.unlink(global_path)
-        os.unlink(global_meta_path)
+        if global_model_path:
+            os.unlink(global_model_path)
+        if global_meta_path:
+            os.unlink(global_meta_path)
+
         for model_path in model_paths:
             os.unlink(model_path)
         for meta_path in meta_paths:
