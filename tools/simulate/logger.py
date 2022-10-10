@@ -96,6 +96,7 @@ class Logger:
 
     def state(self, nodes, state):
         if not nodes:
+            logging.warning('logger.state no nodes to log')
             return
 
         logging.info('logger.state step %d (%d nodes)', state["step"], len(nodes))
@@ -295,7 +296,7 @@ if __name__ == "__main__":
     parser.add_argument('--rundir', type=str, default=None,
             help='Directory of the run in which to save options.')
     parser.add_argument('--nb-processes', type=int, default=4, metavar='N',
-            help='Number of parallel processes to log the accuracy of models. (default: 8)')
+            help='Number of parallel processes to log the accuracy of models. (default: 4)')
     parser.add_argument('--accuracy-logging-interval', type=int, default=1, metavar='N',
                         help='Log validation and test accuracy every X epochs. (default: 1)')
     parser.add_argument('--accuracy-logging-interval-steps', type=int, default=0, metavar='S',
