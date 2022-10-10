@@ -103,7 +103,22 @@ class Logger:
             for node in nodes:
                 self.log_train_accuracy(node, state)
 
-        # Serialize all the models that should be checked
+        # Serialize the average of all models
+        if self.params['logger']['log-global-model-accuracy']:
+            epoch = nodes[0]["epoch"]
+            assert all(map(lambda n: n["epoch"] == epoch, nodes)), "Inconsistent epochs between nodes"
+            center = setup.model.average([ n['model'] for n in nodes ])
+            global_path = os.path.join(self.rundir, "global", "model", "%d".format(state["step"])
+            global_meta_path = os.path.join(self.rundir, "global", "meta", "%d".format(state["step"])
+            with open(global_path, "wb") as center_file:
+                center_file.write(pickle.dumps(center.state_dict()))
+            with open(global_meta_path, "w") as center_meta_file:
+                json.dump({
+                    "step": state["step"],
+                    "epoch": epoch
+                }, center_meta_file)
+
+        # Serialize all the individual models that should be checked
         model_paths = []
         for node in nodes:
             serialized_model = pickle.dumps(node["model"].state_dict())
@@ -118,12 +133,14 @@ class Logger:
                 model_file.write(serialized_model)
 
         # Serialize meta information about nodes (ex: epoch)
+        meta_paths = []
         meta_dir = os.path.join(self.rundir, "meta")
         if not os.path.exists(meta_dir):
             os.mkdir(meta_dir)
         for node in nodes:
             filename = "%d_%d" % (state["step"], node["rank"])
             meta_path = os.path.join(meta_dir, filename)
+            meta_paths.append(meta_path)
             with open(meta_path, "w") as meta_file:
                 json.dump({
                     "rank": node["rank"],
@@ -139,7 +156,7 @@ class Logger:
         logger_ind = 0
         for reserved_das5_node in reserved_das5_nodes:
             for ind in range(3):
-                cmd = "ssh node%d \"source /home/spandey/venv3/bin/activate && PYTHONPATH=%s python %s/simulate/run_logger.py %s %d %d\"" % (reserved_das5_node, os.getcwd(), os.getcwd(), self.rundir, total_loggers, logger_ind)
+                cmd = "ssh node%d \"source /home/spandey/venv3/bin/activate && PYTHONPATH=%s python %s/simulate/run_logger.py %s %d %d %d\"" % (reserved_das5_node, os.getcwd(), os.getcwd(), self.rundir, total_loggers, logger_ind, state["step"])
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 procs.append(p)
                 logger_ind += 1
@@ -149,9 +166,13 @@ class Logger:
             logging.info("logger.state process finished")
             #output, err = p.communicate()
 
-        # Remove the models again
+        # Remove the temporary files
+        os.unlink(global_path)
+        os.unlink(global_meta_path)
         for model_path in model_paths:
             os.unlink(model_path)
+        for meta_path in meta_paths:
+            os.unlink(meta_path)
 
         #self.log_test_accuracy(node, state)
 
@@ -269,6 +290,9 @@ if __name__ == "__main__":
             help="Skip accuracy measurements on training set. ( default: False)")
     parser.add_argument('--log-consensus-distance', action='store_const', const=True, default=False,
             help="Whether to periodically log the consensus distance. ( default: False)")
+    parser.add_argument('--log-global-model-accuracy', action='store_const', const=True, default=False,
+            help="Whether to periodically log the training, validation, and test accuracy " +
+                 "of the global model. ( default: False)")
 
     args = parser.parse_args()
     rundir = m.rundir(args)
@@ -280,7 +304,8 @@ if __name__ == "__main__":
         'skip-testing': args.skip_testing,
         'skip-validation': args.skip_validation,
         'skip-training': args.skip_training,
-        'log-consensus-distance': args.log_consensus_distance
+        'log-consensus-distance': args.log_consensus_distance,
+        'log-global-model-accuracy': args.log_global_model_accuracy
     }
     m.extend(rundir, 'logger', logger) # Add to run parameters
 
