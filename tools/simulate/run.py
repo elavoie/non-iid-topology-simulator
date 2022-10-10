@@ -109,7 +109,7 @@ if __name__ == "__main__":
             if params["topology"]["name"] in ["fully-connected", "sample"] and should_log(nodes[0], epoch_done[0] if 0 in epoch_done else False, params, state):
                 log.state([nodes[0]], state)
             else:
-                logging.warning('run step %d: %d active nodes'.format(state['step'], len(active_nodes)))
+                logging.warning('run step %d: %d active nodes'%(state['step'], len(active_nodes)))
                 nodes_to_log = []
                 for active_node in active_nodes:
                     if should_log(active_node, epoch_done[active_node['rank']], params, state):
