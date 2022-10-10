@@ -99,7 +99,7 @@ class Logger:
             logging.warning('logger.state no nodes to log')
             return
 
-        logging.info('logger.state step %d (%d nodes)', state["step"], len(nodes))
+        logging.warning('logger.state step %d (%d nodes)', state["step"], len(nodes))
         if not self.params['logger']['skip-training']:
             for node in nodes:
                 self.log_train_accuracy(node, state)
