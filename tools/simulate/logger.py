@@ -108,8 +108,8 @@ class Logger:
             epoch = nodes[0]["epoch"]
             assert all(map(lambda n: n["epoch"] == epoch, nodes)), "Inconsistent epochs between nodes"
             center = setup.model.average([ n['model'] for n in nodes ])
-            global_path = os.path.join(self.rundir, "global", "model", "%d".format(state["step"]))
-            global_meta_path = os.path.join(self.rundir, "global", "meta", "%d".format(state["step"]))
+            global_path = os.path.join(self.rundir, "global", "model", str(state["step"]))
+            global_meta_path = os.path.join(self.rundir, "global", "meta", str(state["step"]))
             with open(global_path, "wb") as center_file:
                 center_file.write(pickle.dumps(center.state_dict()))
             with open(global_meta_path, "w") as center_meta_file:
