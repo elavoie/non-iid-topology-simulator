@@ -111,11 +111,11 @@ class Logger:
 
             global_dir = os.path.join(self.rundir, "global", "model")
             if not os.path.exists(global_dir):
-                os.mkdir(global_dir)
+                os.mkdirs(global_dir)
 
             global_meta_dir = os.path.join(self.rundir, "global", "meta")
             if not os.path.exists(global_meta_dir):
-                os.mkdir(global_meta_dir)
+                os.mkdirs(global_meta_dir)
 
             global_path = os.path.join(self.rundir, "global", "model", str(state["step"]))
             global_meta_path = os.path.join(self.rundir, "global", "meta", str(state["step"]))
