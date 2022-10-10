@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # the logger with the highest index is preferred
     # since it has the same or less models to evaluate
     # than the others
-    if params["logger"]["log-global-model-accuracy"] and
+    if params["logger"]["log-global-model-accuracy"] and \
         (total_loggers < 2 or my_logger_index == total_loggers-1):
         print("Global model is also assigned to me")
 
