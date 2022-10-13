@@ -309,6 +309,8 @@ if __name__ == "__main__":
             help="Skip accuracy measurements on test set. ( default: False)")
     parser.add_argument('--skip-training', action='store_const', const=True, default=False, 
             help="Skip accuracy measurements on training set. ( default: False)")
+    parser.add_argument('--skip-full-training', action='store_const', const=True, default=False, 
+            help="Skip accuracy measurements on full training set. ( default: False)")
     parser.add_argument('--log-consensus-distance', action='store_const', const=True, default=False,
             help="Whether to periodically log the consensus distance. ( default: False)")
     parser.add_argument('--log-global-model-accuracy', action='store_const', const=True, default=False,
@@ -325,6 +327,7 @@ if __name__ == "__main__":
         'skip-testing': args.skip_testing,
         'skip-validation': args.skip_validation,
         'skip-training': args.skip_training,
+        'skip-full-training': args.skip_full_training,
         'log-consensus-distance': args.log_consensus_distance,
         'log-global-model-accuracy': args.log_global_model_accuracy
     }

@@ -51,6 +51,11 @@ if __name__ == "__main__":
     test_set = torch.utils.data.DataLoader(d.test(params), 100)
     validation_set = torch.utils.data.DataLoader(d.valid(params), 100)
 
+    if not params['logger']['skip-full-training']:
+        full_training_set = torch.utils.data.DataLoader(d.train(params), 100) 
+    else:
+        full_training_set = None
+
     # Read the directory with models and assign them to this logger instance
     models_dir = os.path.join(rundir, "models")
     meta_dir = os.path.join(rundir, "meta")
@@ -119,7 +124,18 @@ if __name__ == "__main__":
         with open(os.path.join(meta_dir, filename), "r") as meta_file:
             node = json.load(meta_file)
 
-        for type, dataset in [("test", test_set), ("valid", validation_set)]:
+
+        sets = []
+        if not params['logger']['skip-testing']:
+            sets.append(("test", test_set))
+
+        if not params['logger']['skip-validation']:
+            sets.append(("valid", validation_set))
+
+        if not params['logger']['skip-full-training']:
+            sets.append(("full-train", full_training_set))
+
+        for type, dataset in sets:
             print("Computing step %d accuracy for node %d" % (node["step"], node["rank"]))
             accuracy, test_loss = model_accuracy(model, dataset, params)
             event_file = os.path.join(rundir, "events", "{}.jsonlines".format(node["rank"]))
